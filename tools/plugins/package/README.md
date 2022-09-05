@@ -77,7 +77,9 @@ keytool -importcert -keystore signingkeys.pfx -storepass "keystore password" -no
 
 ### Verify a CPI
 ```shell
-./corda-cli.sh package verify mycpi.cpi
+./corda-cli.sh package verify --file=mycpi.cpi \
+     --keystore signingkeys.pfx \
+    --storepass "keystore password" \
 ```
 
 ### Sign a CPI or CPB or CPK
