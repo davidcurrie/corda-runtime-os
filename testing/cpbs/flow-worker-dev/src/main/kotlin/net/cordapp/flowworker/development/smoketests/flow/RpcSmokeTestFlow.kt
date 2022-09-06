@@ -9,10 +9,8 @@ import net.corda.v5.application.flows.FlowEngine
 import net.corda.v5.application.flows.InitiatingFlow
 import net.corda.v5.application.flows.RPCRequestData
 import net.corda.v5.application.flows.RPCStartableFlow
-import net.corda.v5.application.flows.getRequestBodyAs
 import net.corda.v5.application.marshalling.JsonMarshallingService
 import net.corda.v5.application.messaging.FlowMessaging
-import net.corda.v5.application.messaging.sendAndReceive
 import net.corda.v5.application.persistence.PersistenceService
 import net.corda.v5.application.serialization.SerializationService
 import net.corda.v5.application.serialization.deserialize
@@ -81,7 +79,7 @@ class RpcSmokeTestFlow : RPCStartableFlow {
 
     @Suspendable
     override fun call(requestBody: RPCRequestData): String {
-        val request = requestBody.getRequestBodyAs<RpcSmokeTestInput>(jsonMarshallingService)
+        val request = requestBody.getRequestBodyAs(jsonMarshallingService, RpcSmokeTestInput::class.java)
         return jsonMarshallingService.format(request.execute())
     }
 
@@ -237,7 +235,7 @@ class RpcSmokeTestFlow : RPCStartableFlow {
 
             log.info("Creating session '${session}' now sending and waiting for response ...")
             val response = session
-                .sendAndReceive<InitiatedSmokeTestMessage>(InitiatedSmokeTestMessage(messages[idx]))
+                .sendAndReceive(InitiatedSmokeTestMessage::class.java, InitiatedSmokeTestMessage(messages[idx]))
                 .unwrap { it }
 
             log.info("Received response from session '${session}'.")

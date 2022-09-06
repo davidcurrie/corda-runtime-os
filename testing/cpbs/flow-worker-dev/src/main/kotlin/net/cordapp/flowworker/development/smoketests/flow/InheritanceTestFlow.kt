@@ -3,7 +3,6 @@ package net.cordapp.flowworker.development.smoketests.flow
 import net.corda.v5.application.flows.CordaInject
 import net.corda.v5.application.flows.RPCRequestData
 import net.corda.v5.application.flows.RPCStartableFlow
-import net.corda.v5.application.flows.getRequestBodyAs
 import net.corda.v5.application.marshalling.JsonMarshallingService
 import net.corda.v5.application.membership.MemberLookup
 import net.corda.v5.base.annotations.Suspendable
@@ -34,7 +33,8 @@ abstract class AbstractFlow : RPCStartableFlow, MemberResolver {
         log.info("Executing Flow...")
 
         try {
-            val request = requestBody.getRequestBodyAs<Map<String, String>>(jsonMarshallingService)
+            @Suppress("unchecked_cast")
+            val request = requestBody.getRequestBodyAs(jsonMarshallingService, Map::class.java) as Map<String, String>
             val memberInfoRequest = checkNotNull(request["id"]) { "Failed to find key 'id' in the RPC input args" }
 
             return buildOutput(findMember(memberInfoRequest))

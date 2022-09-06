@@ -8,7 +8,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import net.corda.crypto.impl.decorators.CryptoServiceDecorator
 import net.corda.crypto.tck.ExecutionOptions
-import net.corda.v5.base.types.toHexString
+import net.corda.v5.base.types.ByteArrays.toHexString
 import net.corda.v5.cipher.suite.CryptoService
 import net.corda.v5.crypto.sha256Bytes
 import java.util.UUID
@@ -44,5 +44,5 @@ class ComplianceSpec(
     }
 
     fun generateRandomIdentifier(len: Int = 12) =
-        UUID.randomUUID().toString().toByteArray().sha256Bytes().toHexString().take(len)
+        toHexString(UUID.randomUUID().toString().toByteArray().sha256Bytes()).take(len)
 }

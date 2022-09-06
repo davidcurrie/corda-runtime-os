@@ -5,7 +5,7 @@ import net.corda.layeredpropertymap.impl.PropertyConverter
 import net.corda.test.util.createTestCase
 import net.corda.v5.base.exceptions.ValueNotFoundException
 import net.corda.v5.base.types.LayeredPropertyMap
-import net.corda.v5.base.types.toHexString
+import net.corda.v5.base.types.ByteArrays.toHexString
 import net.corda.v5.base.util.parse
 import net.corda.v5.base.util.parseList
 import net.corda.v5.base.util.parseOrNull
@@ -87,6 +87,8 @@ class LayeredPropertyMapTest {
                 )
             )
         )
+
+        private fun ByteArray.toHexString(): String = toHexString(this)
     }
 
     @Test

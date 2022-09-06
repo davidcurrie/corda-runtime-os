@@ -4,7 +4,6 @@ import net.corda.v5.application.flows.CordaInject
 import net.corda.v5.application.flows.FlowEngine
 import net.corda.v5.application.flows.RPCRequestData
 import net.corda.v5.application.flows.RPCStartableFlow
-import net.corda.v5.application.flows.getRequestBodyAs
 import net.corda.v5.application.marshalling.JsonMarshallingService
 import net.corda.v5.base.annotations.Suspendable
 import net.corda.v5.base.util.contextLogger
@@ -26,7 +25,7 @@ class StartTicTacToeGameFlow : RPCStartableFlow {
         log.info("Starting a game of Tic-tac-toe...")
 
         try {
-            val startGame = requestBody.getRequestBodyAs<StartGameMessage>(jsonMarshallingService)
+            val startGame = requestBody.getRequestBodyAs(jsonMarshallingService, StartGameMessage::class.java)
 
             val startingColumn = checkNotNull(startGame.startingColumnPlayed) { "No starting column specified" }
             val startingRow = checkNotNull(startGame.startingRowPlayed) { "No starting row specified" }

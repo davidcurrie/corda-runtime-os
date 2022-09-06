@@ -8,7 +8,7 @@ import net.corda.v5.application.messaging.FlowSession
 import net.corda.v5.base.annotations.Suspendable
 import net.corda.v5.base.util.contextLogger
 
-@InitiatedBy("roll-call")
+@InitiatedBy(protocol = "roll-call")
 class RollCallResponderFlow: ResponderFlow {
 
     private companion object {

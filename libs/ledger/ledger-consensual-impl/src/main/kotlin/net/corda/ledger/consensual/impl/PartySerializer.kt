@@ -17,7 +17,7 @@ import java.security.PublicKey
 class PartySerializer @Activate constructor() : BaseProxySerializer<Party, PartySerializer.PartyProxy>() {
     override fun toProxy(obj: Party): PartyProxy = PartyProxy(obj.name.toString(), obj.owningKey)
 
-    override fun fromProxy(proxy: PartyProxy): Party = PartyImpl(MemberX500Name.Companion.parse(proxy.name), proxy.owningKey)
+    override fun fromProxy(proxy: PartyProxy): Party = PartyImpl(MemberX500Name.parse(proxy.name), proxy.owningKey)
 
     override val proxyType: Class<PartyProxy>
         get() = PartyProxy::class.java

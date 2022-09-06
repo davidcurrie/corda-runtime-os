@@ -9,8 +9,7 @@ import net.corda.v5.crypto.sha256Bytes
 
 @Suppress("unused")
 class TripleSHA256 : DigestAlgorithmFactory {
-    override val algorithm: String
-        get() = TripleSHA256Digest.ALGORITHM
+    override fun getAlgorithm(): String = TripleSHA256Digest.ALGORITHM
 
     override fun getInstance(): DigestAlgorithm = TripleSHA256Digest()
 }
@@ -20,8 +19,8 @@ private class TripleSHA256Digest : DigestAlgorithm {
         const val ALGORITHM = "SHA-256-TRIPLE"
     }
 
-    override val algorithm = ALGORITHM
-    override val digestLength = 32
+    override fun getAlgorithm() = ALGORITHM
+    override fun getDigestLength() = 32
 
     override fun digest(bytes: ByteArray): ByteArray = bytes.sha256Bytes().sha256Bytes().sha256Bytes()
 

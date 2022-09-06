@@ -7,7 +7,6 @@ import net.corda.v5.application.flows.FlowEngine
 import net.corda.v5.application.flows.RPCRequestData
 import net.corda.v5.application.flows.RPCStartableFlow
 import net.corda.v5.application.flows.SubFlow
-import net.corda.v5.application.flows.getRequestBodyAs
 import net.corda.v5.application.marshalling.JsonMarshallingService
 import net.corda.v5.application.membership.MemberLookup
 import net.corda.v5.application.messaging.FlowMessaging
@@ -39,7 +38,7 @@ class HelloFlow : RPCStartableFlow {
 
     @Suspendable
     override fun call(requestBody: RPCRequestData): String {
-        val name = requestBody.getRequestBodyAs<InputMessage>(jsonMarshallingService).name
+        val name = requestBody.getRequestBodyAs(jsonMarshallingService, InputMessage::class.java).name
         val greeting = flowEngine.subFlow(object : SubFlow<String> {
             @Suspendable
             override fun call(): String = "Hello"

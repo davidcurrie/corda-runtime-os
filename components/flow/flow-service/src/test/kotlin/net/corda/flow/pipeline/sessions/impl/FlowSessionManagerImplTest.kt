@@ -51,10 +51,10 @@ class FlowSessionManagerImplTest {
         const val INITIATING_FLOW_NAME = "Initiating flow"
         private const val PROTOCOL = "protocol"
         val X500_NAME = MemberX500Name(
-            commonName = "Alice",
-            organisation = "Alice Corp",
-            locality = "LDN",
-            country = "GB"
+            "Alice",
+            "Alice Corp",
+            "LDN",
+            "GB"
         )
         val HOLDING_IDENTITY = HoldingIdentity("CN=Bob, O=Bob Corp, L=LDN, C=GB", "group id")
         val COUNTERPARTY_HOLDING_IDENTITY = HoldingIdentity(X500_NAME.toString(), "group id")

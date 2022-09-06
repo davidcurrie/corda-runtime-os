@@ -10,11 +10,13 @@ import java.util.concurrent.BlockingQueue
 
 class BlockingQueueFlowSession(
     private val owner: MemberX500Name,
-    override val counterparty: MemberX500Name,
+    private val counterparty: MemberX500Name,
     private val flowClass: Class<out Flow>,
     private val from: BlockingQueue<Any>,
     private val to: BlockingQueue<Any>
 ) : FlowSession {
+    override fun getCounterparty() = counterparty
+
     override fun close() {
         TODO("Not yet implemented")
     }
@@ -23,10 +25,8 @@ class BlockingQueueFlowSession(
         TODO("Not yet implemented")
     }
 
-    override val contextProperties: FlowContextProperties
-        get() {
-            TODO("Not yet implemented")
-        }
+    override fun getContextProperties(): FlowContextProperties
+        = TODO("Not yet implemented")
 
     override fun <R : Any> receive(receiveType: Class<R>): UntrustworthyData<R> {
 

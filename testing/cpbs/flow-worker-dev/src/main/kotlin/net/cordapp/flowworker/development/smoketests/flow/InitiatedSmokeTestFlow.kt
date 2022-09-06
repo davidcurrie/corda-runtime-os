@@ -3,7 +3,6 @@ package net.cordapp.flowworker.development.smoketests.flow
 import net.corda.v5.application.flows.InitiatedBy
 import net.corda.v5.application.flows.ResponderFlow
 import net.corda.v5.application.messaging.FlowSession
-import net.corda.v5.application.messaging.receive
 import net.corda.v5.base.annotations.Suspendable
 import net.cordapp.flowworker.development.smoketests.flow.messages.InitiatedSmokeTestMessage
 
@@ -12,7 +11,7 @@ class InitiatedSmokeTestFlow : ResponderFlow {
 
     @Suspendable
     override fun call(session: FlowSession) {
-        val received = session.receive<InitiatedSmokeTestMessage>().unwrap { it }
+        val received = session.receive(InitiatedSmokeTestMessage::class.java).unwrap { it }
         session.send(InitiatedSmokeTestMessage("echo:${received.message}"))
     }
 }

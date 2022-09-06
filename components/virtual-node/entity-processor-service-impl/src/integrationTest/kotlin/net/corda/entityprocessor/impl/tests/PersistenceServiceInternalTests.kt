@@ -13,6 +13,7 @@ import net.corda.data.persistence.DeleteEntitiesById
 import net.corda.data.persistence.EntityRequest
 import net.corda.data.persistence.EntityResponse
 import net.corda.data.persistence.FindAll
+import net.corda.data.persistence.FindEntities
 import net.corda.data.persistence.MergeEntities
 import net.corda.data.persistence.PersistEntities
 import net.corda.data.persistence.FindWithNamedQuery
@@ -73,7 +74,6 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.util.UUID
 import javax.persistence.EntityManagerFactory
-import net.corda.data.persistence.FindEntities
 
 sealed class QuerySetup {
     data class NamedQuery(val params: Map<String, String>, val query: String = "Dog.summon") : QuerySetup()

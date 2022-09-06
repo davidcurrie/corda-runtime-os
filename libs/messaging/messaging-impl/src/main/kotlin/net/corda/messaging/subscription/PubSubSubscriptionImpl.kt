@@ -15,7 +15,7 @@ import net.corda.messaging.api.subscription.Subscription
 import net.corda.messaging.config.ResolvedSubscriptionConfig
 import net.corda.messaging.subscription.consumer.listener.PubSubConsumerRebalanceListener
 import net.corda.messaging.utils.toRecord
-import net.corda.v5.base.types.toHexString
+import net.corda.v5.base.types.ByteArrays.toHexString
 import net.corda.v5.base.util.debug
 import org.slf4j.LoggerFactory
 import java.util.concurrent.locks.ReentrantLock
@@ -213,6 +213,6 @@ internal class PubSubSubscriptionImpl<K : Any, V : Any>(
     }
 
     private fun logFailedDeserialize(data: ByteArray) {
-        log.error("Failed to deserialize a record on ${config.topic}: (${data.toHexString()}")
+        log.error("Failed to deserialize a record on ${config.topic}: (${toHexString(data)}")
     }
 }

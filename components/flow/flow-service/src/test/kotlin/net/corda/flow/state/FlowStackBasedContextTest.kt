@@ -2,12 +2,12 @@ package net.corda.flow.state
 
 import net.corda.data.KeyValuePair
 import net.corda.data.KeyValuePairList
+import net.corda.flow.application.set
 import net.corda.flow.state.impl.FlowStackBasedContext
 import net.corda.flow.state.impl.FlowStackImpl
 import net.corda.flow.utils.KeyValueStore
 import net.corda.flow.utils.emptyKeyValuePairList
 import net.corda.v5.application.flows.Flow
-import net.corda.v5.application.flows.set
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -203,7 +203,7 @@ class FlowStackBasedContextTest {
 
         flowContext["userkey2"] = "uservalue2"
         flowContext.platformProperties["platformkey2"] = "platformvalue2"
-        flowContext["u-key1"] = "u-value1-overwritten-by-context-api"
+        flowContext.put("u-key1", "u-value1-overwritten-by-context-api")
 
         val platformMap = flowContext.flattenPlatformProperties()
         val userMap = flowContext.flattenUserProperties()

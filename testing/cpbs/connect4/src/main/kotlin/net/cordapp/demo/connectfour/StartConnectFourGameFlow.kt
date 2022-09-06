@@ -4,7 +4,6 @@ import net.corda.v5.application.flows.CordaInject
 import net.corda.v5.application.flows.FlowEngine
 import net.corda.v5.application.flows.RPCRequestData
 import net.corda.v5.application.flows.RPCStartableFlow
-import net.corda.v5.application.flows.getRequestBodyAs
 import net.corda.v5.application.marshalling.JsonMarshallingService
 import net.corda.v5.base.annotations.Suspendable
 import net.corda.v5.base.util.contextLogger
@@ -26,7 +25,7 @@ class StartConnectFourGameFlow : RPCStartableFlow {
         log.info("Starting a game of connect4...")
 
         try {
-            val startGame = requestBody.getRequestBodyAs<StartGameMessage>(jsonMarshallingService)
+            val startGame = requestBody.getRequestBodyAs(jsonMarshallingService, StartGameMessage::class.java)
 
             val startingSlot = checkNotNull(startGame.startingSlotPlayed) { "No starting slot specified" }
             val player2 = checkNotNull(startGame.opponentX500Name) { "No opponent specified" }
@@ -46,7 +45,7 @@ class StartConnectFourGameFlow : RPCStartableFlow {
             log.info("Game Started for player 1 = '${player1}' player 2 ='${player2}'.")
             return jsonMarshallingService.format(gameState)
         } catch (e: Exception) {
-            log.error("Failed to start game for '${requestBody.getRequestBody()}' because '${e.message}'")
+            log.error("Failed to start game for '${requestBody.requestBody}' because '${e.message}'")
             throw e
         }
     }

@@ -14,6 +14,7 @@ import net.corda.v5.ledger.common.transaction.PrivacySalt
  * it has sufficient entropy.
  */
 @CordaSerializable
+@Suppress("ABSTRACT_MEMBER_NOT_IMPLEMENTED", "CONFLICTING_INHERITED_JVM_DECLARATIONS")
 class PrivacySaltImpl(bytes: ByteArray) : OpaqueBytes(bytes), PrivacySalt {
 
     init {

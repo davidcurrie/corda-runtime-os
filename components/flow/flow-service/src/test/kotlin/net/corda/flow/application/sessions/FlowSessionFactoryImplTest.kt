@@ -4,9 +4,9 @@ import net.corda.flow.BOB_X500_NAME
 import net.corda.flow.application.serialization.SerializationServiceInternal
 import net.corda.flow.application.services.MockFlowFiberService
 import net.corda.flow.application.sessions.factory.FlowSessionFactoryImpl
+import net.corda.flow.application.set
 import net.corda.flow.fiber.FlowIORequest
 import net.corda.flow.state.asFlowContext
-import net.corda.v5.application.flows.set
 import net.corda.v5.application.messaging.FlowContextPropertiesBuilder
 import net.corda.v5.base.exceptions.CordaRuntimeException
 import net.corda.v5.serialization.SerializedBytes

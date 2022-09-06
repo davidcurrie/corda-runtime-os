@@ -23,16 +23,15 @@ import java.util.UUID
  * @return the value returned by the subflow when called
  */
 class InjectingFlowEngine(
-    override val virtualNodeName: MemberX500Name,
+    private val virtualNodeName: MemberX500Name,
     private val fiber: SimFiber,
     private val injector: FlowServicesInjector = DefaultServicesInjector(),
     private val flowChecker: FlowChecker = CordaFlowChecker()
 ) : FlowEngine {
-    override val flowId: UUID
-        get() = TODO("Not yet implemented")
+    override fun getVirtualNodeName(): MemberX500Name = virtualNodeName
+    override fun getFlowId(): UUID = TODO("Not yet implemented")
 
-    override val flowContextProperties: FlowContextProperties
-        get() = TODO("Not yet implemented")
+    override fun getFlowContextProperties(): FlowContextProperties = TODO("Not yet implemented")
 
     override fun <R> subFlow(subFlow: SubFlow<R>): R {
         flowChecker.check(subFlow.javaClass)

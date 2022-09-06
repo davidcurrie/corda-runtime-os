@@ -3,7 +3,6 @@ package net.cordapp.demo.mandelbrot
 import net.corda.v5.application.flows.CordaInject
 import net.corda.v5.application.flows.RPCRequestData
 import net.corda.v5.application.flows.RPCStartableFlow
-import net.corda.v5.application.flows.getRequestBodyAs
 import net.corda.v5.application.marshalling.JsonMarshallingService
 import net.corda.v5.base.annotations.Suspendable
 import net.corda.v5.base.util.contextLogger
@@ -281,7 +280,7 @@ class CalculateBlockFlow : RPCStartableFlow {
         log.info("Starting mandelbrot calc...")
 
         try {
-            val requestMessage = requestBody.getRequestBodyAs<RequestMessage>(jsonMarshallingService)
+            val requestMessage = requestBody.getRequestBodyAs(jsonMarshallingService, RequestMessage::class.java)
 
             val response = Array(requestMessage.pixelWidth * requestMessage.pixelHeight) { IntArray(3) { 0 } }
 

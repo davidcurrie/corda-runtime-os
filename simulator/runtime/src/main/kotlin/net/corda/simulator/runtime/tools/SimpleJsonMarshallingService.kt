@@ -27,7 +27,7 @@ class SimpleJsonMarshallingService : JsonMarshallingService{
     }
 
     override fun <T> parse(input: String, clazz: Class<T>): T {
-        return objectMapper.readValue<T>(input, clazz)
+        return objectMapper.readValue(input, clazz)
     }
 
     override fun <T> parseList(input: String, clazz: Class<T>): List<T> {

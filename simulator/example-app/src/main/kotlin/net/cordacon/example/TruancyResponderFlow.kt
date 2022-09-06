@@ -16,7 +16,7 @@ import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
 
-@InitiatedBy("truancy-record")
+@InitiatedBy(protocol = "truancy-record")
 class TruancyResponderFlow : ResponderFlow {
 
     private companion object {

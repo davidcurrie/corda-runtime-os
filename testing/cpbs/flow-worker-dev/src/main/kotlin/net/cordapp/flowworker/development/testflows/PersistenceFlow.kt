@@ -6,7 +6,6 @@ import net.cordapp.testing.bundles.dogs.Dog
 import net.corda.v5.application.flows.CordaInject
 import net.corda.v5.application.flows.RPCRequestData
 import net.corda.v5.application.flows.RPCStartableFlow
-import net.corda.v5.application.flows.getRequestBodyAs
 import net.corda.v5.application.marshalling.JsonMarshallingService
 import net.corda.v5.application.persistence.CordaPersistenceException
 import net.corda.v5.application.persistence.PersistenceService
@@ -34,7 +33,7 @@ class PersistenceFlow : RPCStartableFlow {
     override fun call(requestBody: RPCRequestData): String {
         log.info("Starting Test Flow...")
         try {
-            val inputs = requestBody.getRequestBodyAs<TestFlowInput>(jsonMarshallingService)
+            val inputs = requestBody.getRequestBodyAs(jsonMarshallingService, TestFlowInput::class.java)
 
             persistenceService.persist(123)
             persistenceService.remove(123)

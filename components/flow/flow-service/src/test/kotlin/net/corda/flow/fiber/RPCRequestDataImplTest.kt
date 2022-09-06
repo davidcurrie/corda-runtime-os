@@ -3,10 +3,10 @@ package net.corda.flow.fiber
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import net.corda.data.flow.FlowStartContext
+import net.corda.flow.application.getRequestBodyAs
+import net.corda.flow.application.getRequestBodyAsList
 import net.corda.flow.state.FlowCheckpoint
 import net.corda.test.util.identity.createTestHoldingIdentity
-import net.corda.v5.application.flows.getRequestBodyAs
-import net.corda.v5.application.flows.getRequestBodyAsList
 import net.corda.v5.application.marshalling.MarshallingService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -23,7 +23,7 @@ class RPCRequestDataImplTest {
     @Test
     fun `rpc request data is retrieved when getRequestBody is called`() {
         val requestData = RPCRequestDataImpl(setupStartArgs(TEST_START_ARGS))
-        assertEquals(TEST_START_ARGS, requestData.getRequestBody())
+        assertEquals(TEST_START_ARGS, requestData.requestBody)
     }
 
     @Test

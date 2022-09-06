@@ -7,11 +7,9 @@ import net.corda.v5.application.flows.InitiatingFlow
 import net.corda.v5.application.flows.RPCRequestData
 import net.corda.v5.application.flows.RPCStartableFlow
 import net.corda.v5.application.flows.ResponderFlow
-import net.corda.v5.application.flows.getRequestBodyAs
 import net.corda.v5.application.marshalling.JsonMarshallingService
 import net.corda.v5.application.messaging.FlowMessaging
 import net.corda.v5.application.messaging.FlowSession
-import net.corda.v5.application.messaging.receive
 import net.corda.v5.application.persistence.PersistenceService
 import net.corda.v5.base.annotations.Suspendable
 import net.corda.v5.base.types.MemberX500Name
@@ -48,7 +46,7 @@ class ChatOutgoingFlow : RPCStartableFlow {
     @Suspendable
     override fun call(requestBody: RPCRequestData): String {
         log.info("Chat outgoing flow starting in ${flowEngine.virtualNodeName}...")
-        val inputs = requestBody.getRequestBodyAs<ChatOutgoingFlowParameter>(jsonMarshallingService)
+        val inputs = requestBody.getRequestBodyAs(jsonMarshallingService, ChatOutgoingFlowParameter::class.java)
         inputs.recipientX500Name ?: throw IllegalArgumentException("Recipient X500 name not supplied")
         inputs.message ?: throw IllegalArgumentException("Chat message not supplied")
 
@@ -93,7 +91,7 @@ class ChatIncomingFlow : ResponderFlow {
         log.info("Chat incoming flow starting in {$thisVirtualNodeName}...")
 
         val sender = session.counterparty.toString()
-        val message = session.receive<MessageContainer>().unwrap { it.message }
+        val message = session.receive(MessageContainer::class.java).unwrap { it.message }
 
         storeIncomingMessage(persistenceService, sender, message)
 

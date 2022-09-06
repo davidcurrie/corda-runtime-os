@@ -1,9 +1,9 @@
 package net.corda.flow.state
 
+import net.corda.flow.application.set
 import net.corda.flow.state.impl.FlatSerializableContext
 import net.corda.flow.state.impl.MutableFlatSerializableContext
 import net.corda.v5.application.flows.Flow
-import net.corda.v5.application.flows.set
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

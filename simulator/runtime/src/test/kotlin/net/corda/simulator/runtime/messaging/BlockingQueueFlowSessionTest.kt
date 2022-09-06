@@ -3,7 +3,6 @@ package net.corda.simulator.runtime.messaging
 import net.corda.simulator.runtime.testflows.PingAckFlow
 import net.corda.simulator.runtime.testflows.PingAckMessage
 import net.corda.simulator.runtime.testflows.PingAckResponderFlow
-import net.corda.v5.application.messaging.receive
 import net.corda.v5.base.types.MemberX500Name
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
@@ -42,6 +41,6 @@ class BlockingQueueFlowSessionTest {
         sendingSession.send(payload)
 
         // Then we should be able to return the response that appears in the queue
-        assertThat(receivingSession.receive<PingAckMessage>().unwrap { it }.message, `is`("Ping"))
+        assertThat(receivingSession.receive(PingAckMessage::class.java).unwrap { it }.message, `is`("Ping"))
     }
 }

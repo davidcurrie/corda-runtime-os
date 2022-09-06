@@ -20,8 +20,7 @@ class LayeredPropertyMapImpl(
 
     override operator fun get(key: String): String? = properties[key]
 
-    override val entries: Set<Map.Entry<String, String?>>
-        get() = properties.entries
+    override fun getEntries(): Set<Map.Entry<String, String?>> = properties.entries
 
     /**
      * Function for reading and parsing the String values to actual objects.

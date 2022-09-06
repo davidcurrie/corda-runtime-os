@@ -31,7 +31,7 @@ class DigestAlgorithmFactoryProviderImpl @Activate constructor(
                         bundleContext.ungetService(reference)
                     })
                 }
-            }?.associateBy(DigestAlgorithmFactory::algorithm)
+            }?.associateBy(DigestAlgorithmFactory::getAlgorithm)
     }
 
     // This property MUST be "lazy" so that it is executed from within the sandbox.

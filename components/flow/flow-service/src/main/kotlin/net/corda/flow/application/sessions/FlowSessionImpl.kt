@@ -17,7 +17,7 @@ import net.corda.v5.base.util.contextLogger
 
 @Suppress("LongParameterList")
 class FlowSessionImpl(
-    override val counterparty: MemberX500Name,
+    private val counterparty: MemberX500Name,
     private val sourceSessionId: String,
     private val flowFiberService: FlowFiberService,
     private val serializationService: SerializationServiceInternal,
@@ -29,7 +29,7 @@ class FlowSessionImpl(
         private val log = contextLogger()
     }
 
-    override val contextProperties: FlowContextProperties = flowContext
+    override fun getContextProperties(): FlowContextProperties = flowContext
 
     enum class Direction {
         INITIATING_SIDE,
@@ -42,6 +42,8 @@ class FlowSessionImpl(
     }
 
     private val fiber: FlowFiber get() = flowFiberService.getExecutingFiber()
+
+    override fun getCounterparty() = counterparty
 
     @Suspendable
     override fun getCounterpartyFlowInfo(): FlowInfo {
