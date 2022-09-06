@@ -217,7 +217,7 @@ class MemberProcessorIntegrationTest {
         @AfterAll
         fun cleanup() {
             if (::testDependencies.isInitialized) {
-                testDependencies.close()
+                testDependencies.stop()
             }
         }
 
