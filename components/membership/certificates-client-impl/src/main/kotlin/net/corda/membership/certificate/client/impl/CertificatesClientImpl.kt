@@ -108,7 +108,7 @@ class CertificatesClientImpl @Activate constructor(
     }
 
     override val isRunning: Boolean
-        get() = sender?.isRunning ?: false
+        get() = sender != null
 
     override fun start() {
         logger.info("Starting component.")
