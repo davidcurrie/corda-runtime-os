@@ -38,8 +38,8 @@ class MemberLookupRpcOpsImpl @Activate constructor(
         fun lookup(
             holdingIdentityShortHash: ShortHash,
             commonName: String?,
-            organisation: String?,
-            organisationUnit: String?,
+            organization: String?,
+            organizationUnit: String?,
             locality: String?,
             state: String?,
             country: String?
@@ -85,16 +85,16 @@ class MemberLookupRpcOpsImpl @Activate constructor(
     override fun lookup(
         holdingIdentityShortHash: String,
         commonName: String?,
-        organisation: String?,
-        organisationUnit: String?,
+        organization: String?,
+        organizationUnit: String?,
         locality: String?,
         state: String?,
         country: String?
     ) = impl.lookup(
         holdingIdentityShortHash.toShortHash(),
         commonName,
-        organisation,
-        organisationUnit,
+        organization,
+        organizationUnit,
         locality,
         state,
         country
@@ -114,8 +114,8 @@ class MemberLookupRpcOpsImpl @Activate constructor(
         override fun lookup(
             holdingIdentityShortHash: ShortHash,
             commonName: String?,
-            organisation: String?,
-            organisationUnit: String?,
+            organization: String?,
+            organizationUnit: String?,
             locality: String?,
             state: String?,
             country: String?
@@ -129,8 +129,8 @@ class MemberLookupRpcOpsImpl @Activate constructor(
         override fun lookup(
             holdingIdentityShortHash: ShortHash,
             commonName: String?,
-            organisation: String?,
-            organisationUnit: String?,
+            organization: String?,
+            organizationUnit: String?,
             locality: String?,
             state: String?,
             country: String?
@@ -142,8 +142,8 @@ class MemberLookupRpcOpsImpl @Activate constructor(
             val filteredMembers = reader.lookup().filter { member ->
                 val memberName = member.name
                 commonName?.let { memberName.commonName.equals(it, true) } ?: true &&
-                organisation?.let { memberName.organisation.equals(it, true) } ?: true &&
-                organisationUnit?.let { memberName.organisationUnit.equals(it, true) } ?: true &&
+                organization?.let { memberName.organization.equals(it, true) } ?: true &&
+                organizationUnit?.let { memberName.organizationUnit.equals(it, true) } ?: true &&
                 locality?.let { memberName.locality.equals(it, true) } ?: true &&
                 state?.let { memberName.state.equals(it, true) } ?: true &&
                 country?.let { memberName.country.equals(it, true) } ?: true
