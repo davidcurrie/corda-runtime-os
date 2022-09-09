@@ -292,26 +292,28 @@ internal class DatabaseCpiPersistenceTest {
         assertThat(initialLoadedCpi.cpks.first().entityVersion).isEqualTo(0)
 
         val (updatedCpk) = makeCpks()
-        val updatedCpi = mockCpiWithId(listOf(cpk1, updatedCpk), cpi.metadata.cpiId) // cpi with different CPKs but same ID
+        val updatedCpi =
+            mockCpiWithId(listOf(cpk1, updatedCpk), cpi.metadata.cpiId) // cpi with different CPKs but same ID
         val returnedCpiMetadataEntity = doUpdate(updatedCpi)
 
-        assertThat(returnedCpiMetadataEntity.entityVersion).isEqualTo(3)
-        val firstReturnedCpk = returnedCpiMetadataEntity.cpks.first { it.cpkFileChecksum == cpk1.csum }
-        val secondReturnedCpk = returnedCpiMetadataEntity.cpks.first { it.cpkFileChecksum == updatedCpk.csum }
-        assertThat(firstReturnedCpk.entityVersion).isEqualTo(0)
-        assertThat(secondReturnedCpk.entityVersion).isEqualTo(0)
+        fun verifyDoubleCpi(
+            cpiMetadata: CpiMetadataEntity,
+            cpk1: Cpk,
+            updatedCpk: Cpk
+        ) {
+            assertThat(cpiMetadata.cpks.size).isEqualTo(2)
+            assertThat(cpiMetadata.entityVersion).isEqualTo(3)
+            val firstReturnedCpk = cpiMetadata.cpks.first { it.cpkFileChecksum == cpk1.csum }
+            val secondReturnedCpk = cpiMetadata.cpks.first { it.cpkFileChecksum == updatedCpk.csum }
+            assertThat(firstReturnedCpk.entityVersion).isEqualTo(0)
+            assertThat(secondReturnedCpk.entityVersion).isEqualTo(0)
+        }
 
-        // make same assertions but after loading the entity again
-        val updatedLoadedCpi = loadCpiDirectFromDatabase(updatedCpi)
-
-        assertThat(updatedLoadedCpi.cpks.size).isEqualTo(2)
-        assertThat(updatedLoadedCpi.entityVersion).isEqualTo(3)
-        val firstCpk = updatedLoadedCpi.cpks.first { it.cpkFileChecksum == cpk1.csum }
-        val secondCpk = updatedLoadedCpi.cpks.first { it.cpkFileChecksum == updatedCpk.csum }
-        assertThat(firstCpk.entityVersion).isEqualTo(0)
-        assertThat(secondCpk.entityVersion).isEqualTo(0)
+        verifyDoubleCpi(returnedCpiMetadataEntity, cpk1, updatedCpk)
+        val updatedLoadedCpi = loadCpiDirectFromDatabase(updatedCpi) // and check the same in the database
+        verifyDoubleCpi(updatedLoadedCpi, cpk1, updatedCpk)
     }
-
+    
     @Test
     fun `database cpi persistence can force update the same CPI`() {
         val cpiChecksum = newRandomSecureHash()
