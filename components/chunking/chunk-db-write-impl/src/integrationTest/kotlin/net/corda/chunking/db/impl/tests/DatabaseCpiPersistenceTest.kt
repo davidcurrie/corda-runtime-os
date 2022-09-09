@@ -198,7 +198,7 @@ internal class DatabaseCpiPersistenceTest {
     fun `database cpi persistence writes data and can be read back`() {
         val cpks = makeCpks()
         val cpi = mockCpi(cpks)
-        doPersist(cpi, "test.cpi")
+        doPersist(cpi)
 
         val query = "FROM ${CpkFileEntity::class.simpleName} where fileChecksum = :cpkFileChecksum"
         val cpkDataEntity = entityManagerFactory.createEntityManager().transaction {
@@ -219,7 +219,7 @@ internal class DatabaseCpiPersistenceTest {
         assertThat(cpiPersistence.cpkExists(cpks.first().metadata.fileChecksum)).isTrue
     }
 
-    private fun doPersist(cpi: Cpi, filename: String) {
+    private fun doPersist(cpi: Cpi, filename: String="test.cpi") {
         cpiPersistence.persistMetadataAndCpks(
             cpi,
             filename,
@@ -240,34 +240,10 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `database cpi persistence can write multiple cpks into database`() {
-        val cpks = listOf(
-            mockCpk("${UUID.randomUUID()}.cpk", newRandomSecureHash()),
-            mockCpk("${UUID.randomUUID()}.cpk", newRandomSecureHash()),
-            mockCpk("${UUID.randomUUID()}.cpk", newRandomSecureHash()),
-        )
-        val checksum = newRandomSecureHash()
-
+        val cpks = makeCpks(3)
         val cpi = mockCpi(cpks)
-
-        cpiPersistence.persistMetadataAndCpks(
-            cpi,
-            "test.cpi",
-            checksum,
-            UUID.randomUUID().toString(),
-            "123456",
-            emptyList()
-        )
-
-        assertThrows<PersistenceException> {
-            cpiPersistence.persistMetadataAndCpks(
-                cpi,
-                "test.cpi",
-                checksum,
-                UUID.randomUUID().toString(),
-                "123456",
-                emptyList()
-            )
-        }
+        doPersist(cpi)
+        assertThrows<PersistenceException> { doPersist(cpi) }
     }
 
     @Test
