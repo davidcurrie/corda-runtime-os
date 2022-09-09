@@ -219,13 +219,13 @@ internal class DatabaseCpiPersistenceTest {
         assertThat(cpiPersistence.cpkExists(cpks.first().metadata.fileChecksum)).isTrue
     }
 
-    private fun doPersist(cpi: Cpi, filename: String="test.cpi") {
+    private fun doPersist(cpi: Cpi, filename: String="test.cpi", groupId: String = "abcdef") {
         cpiPersistence.persistMetadataAndCpks(
             cpi,
             filename,
-            cpi.cpks.first().metadata.fileChecksum,
+            newRandomSecureHash(),
             UUID.randomUUID().toString(),
-            "abcdef",
+            groupId,
             emptyList()
         )
     }
@@ -248,42 +248,23 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `database cpi persistence can write multiple CPIs with shared CPKs into database`() {
-        val sharedCpkChecksum = newRandomSecureHash()
-        val cpk1Checksum = newRandomSecureHash()
-        val cpk2Checksum = newRandomSecureHash()
-
-        val sharedCpk = mockCpk("${UUID.randomUUID()}.cpk", sharedCpkChecksum)
-        val cpk1 = mockCpk("${UUID.randomUUID()}.cpk", cpk1Checksum)
+        val (sharedCpk, cpk1, cpk2) = makeCpks(3)
         val cpi1 = mockCpi(listOf(sharedCpk, cpk1))
 
-        cpiPersistence.persistMetadataAndCpks(
-            cpi1,
-            "test.cpi",
-            newRandomSecureHash(),
-            UUID.randomUUID().toString(),
-            "123456",
-            emptyList()
-        )
+        doPersist(cpi1, groupId="123456")
 
-        val cpk2 = mockCpk("${UUID.randomUUID()}.cpk", cpk2Checksum)
         val cpi2 = mockCpi(listOf(sharedCpk, cpk2))
 
         assertDoesNotThrow {
-            cpiPersistence.persistMetadataAndCpks(
-                cpi2,
-                "test.cpi",
-                newRandomSecureHash(),
-                UUID.randomUUID().toString(),
-                "123456",
-                emptyList()
-            )
+            doPersist(cpi2, groupId="123456")
         }
 
         // no updates to existing CPKs have occurred hence why all entity versions are 0
+
         findAndAssertCpk(
             cpiId = cpi1.metadata.cpiId,
             cpkId = sharedCpk.metadata.cpkId,
-            expectedCpkFileChecksum = sharedCpkChecksum.toString(),
+            expectedCpkFileChecksum = sharedCpk.metadata.fileChecksum.toString(),
             expectedMetadataEntityVersion = 0,
             expectedFileEntityVersion = 0,
             expectedCpiCpkEntityVersion = 0
@@ -291,7 +272,7 @@ internal class DatabaseCpiPersistenceTest {
         findAndAssertCpk(
             cpiId = cpi2.metadata.cpiId,
             cpkId = sharedCpk.metadata.cpkId,
-            expectedCpkFileChecksum = sharedCpkChecksum.toString(),
+            expectedCpkFileChecksum = sharedCpk.metadata.fileChecksum.toString(),
             expectedMetadataEntityVersion = 0,
             expectedFileEntityVersion = 0,
             expectedCpiCpkEntityVersion = 0
@@ -299,7 +280,7 @@ internal class DatabaseCpiPersistenceTest {
         findAndAssertCpk(
             cpiId = cpi1.metadata.cpiId,
             cpkId = cpk1.metadata.cpkId,
-            expectedCpkFileChecksum = cpk1Checksum.toString(),
+            expectedCpkFileChecksum = cpk1.metadata.fileChecksum.toString(),
             expectedMetadataEntityVersion = 0,
             expectedFileEntityVersion = 0,
             expectedCpiCpkEntityVersion = 0
@@ -307,7 +288,7 @@ internal class DatabaseCpiPersistenceTest {
         findAndAssertCpk(
             cpiId = cpi2.metadata.cpiId,
             cpkId = cpk2.metadata.cpkId,
-            expectedCpkFileChecksum = cpk2Checksum.toString(),
+            expectedCpkFileChecksum = cpk2.metadata.fileChecksum.toString(),
             expectedMetadataEntityVersion = 0,
             expectedFileEntityVersion = 0,
             expectedCpiCpkEntityVersion = 0
