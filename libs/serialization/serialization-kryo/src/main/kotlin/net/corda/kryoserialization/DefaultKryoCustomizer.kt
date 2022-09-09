@@ -43,7 +43,7 @@ class DefaultKryoCustomizer {
     companion object {
         private const val LOGGER_ID = Int.MAX_VALUE
 
-        fun customize(
+        internal fun customize(
             kryo: Kryo,
             serializers: Map<Class<*>, Serializer<*>>,
             classResolver: CordaClassResolver,
