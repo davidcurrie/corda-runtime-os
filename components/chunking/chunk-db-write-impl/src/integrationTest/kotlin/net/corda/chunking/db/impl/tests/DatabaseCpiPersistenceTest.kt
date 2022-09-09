@@ -368,29 +368,11 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `CPKs are correct after persisting a CPI with already existing CPK`() {
-        val sharedCpk = mockCpk("${UUID.randomUUID()}.cpk", newRandomSecureHash())
+        val (sharedCpk) = makeCpks()
         val cpi = mockCpi(listOf(sharedCpk))
-
-        cpiPersistence.persistMetadataAndCpks(
-            cpi,
-            "test.cpi",
-            newRandomSecureHash(),
-            UUID.randomUUID().toString(),
-            "group-a",
-            emptyList()
-        )
-
+        doPersist(cpi, groupId = "group-a")
         val cpi2 = mockCpi(listOf(sharedCpk))
-
-        cpiPersistence.persistMetadataAndCpks(
-            cpi2,
-            "test2.cpi",
-            newRandomSecureHash(),
-            UUID.randomUUID().toString(),
-            "group-b",
-            emptyList()
-        )
-
+        doPersist(cpi2, filename = "test2.cpi", groupId = "group-b")
         // no updates to existing CPKs have occurred hence why all entity versions are 0
         findAndAssertCpks(listOf(Pair(cpi, sharedCpk), Pair(cpi2, sharedCpk)))
     }
@@ -410,12 +392,12 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `CPK version is incremented when we update a CPK in a CPI`() {
-        val cpk = mockCpk("${UUID.randomUUID()}.cpk", newRandomSecureHash())
+        val (cpk) = makeCpks()
         val newChecksum = newRandomSecureHash()
         val updatedCpk = updatedCpk(cpk.metadata.cpkId, newChecksum)
         val cpi = mockCpi(listOf(cpk))
         doPersist(cpi, groupId = "group-a")
-        // a new cpi object, but with same
+        // a new cpi object, but with same ID
         val updatedCpi = mockCpiWithId(listOf(updatedCpk), cpi.metadata.cpiId)
         doUpdate(updatedCpi, groupId = "group-b")
         assertThat(cpi.metadata.cpiId).isEqualTo(updatedCpi.metadata.cpiId)
@@ -431,8 +413,7 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `CPK version is incremented when CpiCpkEntity has non-zero entityversion`() {
-        val firstCpkChecksum = newRandomSecureHash()
-        val cpk = mockCpk("${UUID.randomUUID()}.cpk", firstCpkChecksum)
+        val (cpk) = makeCpks()
         val cpi = mockCpi(listOf(cpk))
         doPersist(cpi, groupId = "group-a")
         findAndAssertCpks(listOf(Pair(cpi, cpk)))
@@ -458,14 +439,7 @@ internal class DatabaseCpiPersistenceTest {
         val anotherUpdatedCpk = updatedCpk(cpk.metadata.cpkId, thirdChecksum)
         val anotherUpdatedCpi = mockCpiWithId(listOf(anotherUpdatedCpk), cpi.metadata.cpiId)
 
-        cpiPersistence.updateMetadataAndCpks(
-            anotherUpdatedCpi,
-            "test.cpi",
-            newRandomSecureHash(),
-            UUID.randomUUID().toString(),
-            "group-b",
-            emptyList()
-        )
+        doUpdate(anotherUpdatedCpi, groupId = "group-b")
 
         // We have updated the same CPK again hence why the entity versions are incremented again.
         findAndAssertCpks(
