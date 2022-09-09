@@ -405,14 +405,7 @@ internal class DatabaseCpiPersistenceTest {
         // a new cpi object, but with same ID and added new CPK
         val updatedCpi = mockCpiWithId(listOf(cpk, newCpk), cpi.metadata.cpiId)
 
-        cpiPersistence.updateMetadataAndCpks(
-            updatedCpi,
-            "test.cpi",
-            newRandomSecureHash(),
-            UUID.randomUUID().toString(),
-            "group-b",
-            emptyList()
-        )
+        doUpdate(updatedCpi, groupId = "group-b")
 
         assertThat(cpi.metadata.cpiId).isEqualTo(updatedCpi.metadata.cpiId)
 
