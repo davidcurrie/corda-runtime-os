@@ -1,11 +1,13 @@
 package net.corda.applications.workers.smoketest.virtualnode.helpers
 
+import net.corda.cli.plugins.packaging.CreateCpiV2
 import java.io.ByteArrayOutputStream
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.createTempDirectory
 
 object CpiLoader {
     private const val groupIdPlaceholder = "group-id-placeholder"
@@ -22,6 +24,12 @@ object CpiLoader {
      * Don't use this method when we have actual CPIs
      */
     private fun cpbToCpi(inputStream: InputStream, groupId: String): InputStream {
+
+        createTempDirectory()
+
+        CreateCpiV2().apply {
+            cpbFileName
+        }
         val bytes = ByteArrayOutputStream().use { byteStream ->
             ZipOutputStream(byteStream).use { zout ->
                 val zin = ZipInputStream(inputStream)
