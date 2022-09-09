@@ -1,6 +1,9 @@
 package net.corda.applications.workers.smoketest.virtualnode.helpers
 
 import net.corda.cli.plugins.packaging.CreateCpiV2
+import net.corda.cli.plugins.packaging.signing.SigningOptions
+import net.corda.utilities.deleteRecursively
+import net.corda.utilities.write
 import java.io.ByteArrayOutputStream
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -25,36 +28,70 @@ object CpiLoader {
      */
     private fun cpbToCpi(inputStream: InputStream, groupId: String): InputStream {
 
-        createTempDirectory()
+        val tempDirectory = createTempDirectory()
+        try {
+            // Save CPB to disk
+            val cpbPath = tempDirectory.resolve("cpb")
+            cpbPath.write { inputStream.copyTo(it) }
 
-        CreateCpiV2().apply {
-            cpbFileName
-        }
-        val bytes = ByteArrayOutputStream().use { byteStream ->
-            ZipOutputStream(byteStream).use { zout ->
-                val zin = ZipInputStream(inputStream)
-                var zipEntry: ZipEntry?
-                while (zin.nextEntry.apply { zipEntry = this } != null) {
-                    zout.apply {
-                        putNextEntry(zipEntry!!)
-                        zin.copyTo(zout)
-                        closeEntry()
-                    }
+            // Save group policy to disk
+            val groupPolicyPath = tempDirectory.resolve("groupPolicy")
+            groupPolicyPath.write { it.bufferedWriter().write(getStaticNetworkPolicy(groupId)) }
+
+            // Save keystore to disk
+            val keyStorePath = tempDirectory.resolve("alice.p12")
+            keyStorePath.write { it.write(getKeyStore()) }
+
+            // Create CPI
+            val cpiPath = tempDirectory.resolve("cpi")
+            CreateCpiV2().apply {
+                cpbFileName = cpbPath.toString()
+                cpiName = "cpi name"
+                cpiVersion = "1.0.0.0-SNAPSHOT"
+                cpiUpgrade = false
+                groupPolicyFileName = groupPolicyPath.toString()
+                outputFileName = cpiPath.toString()
+                signingOptions = SigningOptions().apply {
+                    keyStoreFileName = keyStorePath.toString()
+                    keyStorePass = "cordadevpass"
+                    keyAlias = "alice"
                 }
-                addGroupPolicy(zout, groupId)
+
+            }.run()
+
+            val bytes = ByteArrayOutputStream().use { byteStream ->
+                ZipOutputStream(byteStream).use { zout ->
+                    val zin = ZipInputStream(inputStream)
+                    var zipEntry: ZipEntry?
+                    while (zin.nextEntry.apply { zipEntry = this } != null) {
+                        zout.apply {
+                            putNextEntry(zipEntry!!)
+                            zin.copyTo(zout)
+                            closeEntry()
+                        }
+                    }
+                    addGroupPolicy(zout, groupId)
+                }
+                byteStream.toByteArray()
             }
-            byteStream.toByteArray()
+            return bytes.inputStream()
+        } finally {
+            tempDirectory.deleteRecursively()
         }
-        return bytes.inputStream()
     }
 
+    private fun getKeyStore() = javaClass.classLoader.getResourceAsStream("alice.p12")?.use { it.readAllBytes() }
+        ?: throw Exception("alice.p12 not found")
+
     private fun addGroupPolicy(zipOutputStream: ZipOutputStream, groupId: String) {
-        val staticNetworkPolicy = javaClass.classLoader.getResourceAsStream("GroupPolicy-static-network.json")
-            .reader().use { it.readText() }
-            .replace(groupIdPlaceholder, groupId)
+        val staticNetworkPolicy = getStaticNetworkPolicy(groupId)
 
         zipOutputStream.putNextEntry(ZipEntry("META-INF/GroupPolicy.json"))
         staticNetworkPolicy.byteInputStream().use { it.copyTo(zipOutputStream) }
         zipOutputStream.closeEntry()
     }
+
+    private fun getStaticNetworkPolicy(groupId: String) = javaClass.classLoader.getResourceAsStream("GroupPolicy-static-network.json")
+        .reader().use { it.readText() }
+        .replace(groupIdPlaceholder, groupId)
 }
