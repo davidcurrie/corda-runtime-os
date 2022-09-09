@@ -196,23 +196,14 @@ internal class DatabaseCpiPersistenceTest {
      */
     @Test
     fun `database cpi persistence writes data and can be read back`() {
-        val checksum = newRandomSecureHash()
-        val cpks = listOf(mockCpk("${UUID.randomUUID()}.cpk", checksum))
+        val cpks = makeCpks()
         val cpi = mockCpi(cpks)
-
-        cpiPersistence.persistMetadataAndCpks(
-            cpi,
-            "test.cpi",
-            checksum,
-            UUID.randomUUID().toString(),
-            "abcdef",
-            emptyList()
-        )
+        doPersist(cpi, "test.cpi")
 
         val query = "FROM ${CpkFileEntity::class.simpleName} where fileChecksum = :cpkFileChecksum"
         val cpkDataEntity = entityManagerFactory.createEntityManager().transaction {
             it.createQuery(query, CpkFileEntity::class.java)
-                .setParameter("cpkFileChecksum", checksum.toString())
+                .setParameter("cpkFileChecksum", cpks.first().metadata.fileChecksum.toString())
                 .singleResult
         }!!
 
@@ -221,21 +212,26 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `database cpi persistence can lookup persisted cpi by checksum`() {
-        val checksum = newRandomSecureHash()
-        assertThat(cpiPersistence.cpkExists(checksum)).isFalse
-
-        val cpks = listOf(mockCpk("${UUID.randomUUID()}.cpk", checksum))
+        val cpks = makeCpks()
+        assertThat(cpiPersistence.cpkExists(cpks.first().metadata.fileChecksum)).isFalse
         val cpi = mockCpi(cpks)
+        doPersist(cpi, "someFileName.cpi")
+        assertThat(cpiPersistence.cpkExists(cpks.first().metadata.fileChecksum)).isTrue
+    }
+
+    private fun doPersist(cpi: Cpi, filename: String) {
         cpiPersistence.persistMetadataAndCpks(
             cpi,
-            "someFileName.cpi",
-            checksum,
+            filename,
+            cpi.cpks.first().metadata.fileChecksum,
             UUID.randomUUID().toString(),
             "abcdef",
             emptyList()
         )
-        assertThat(cpiPersistence.cpkExists(checksum)).isTrue
     }
+
+    private fun makeCpks(n: Int = 1): List<Cpk> =
+        (1..n).map { mockCpk("${UUID.randomUUID()}.cpk", newRandomSecureHash()) }
 
     private val random = Random(0)
     private fun newRandomSecureHash(): SecureHash {
