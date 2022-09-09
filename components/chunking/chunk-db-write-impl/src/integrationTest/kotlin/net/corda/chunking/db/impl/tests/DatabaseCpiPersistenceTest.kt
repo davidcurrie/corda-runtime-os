@@ -273,10 +273,7 @@ internal class DatabaseCpiPersistenceTest {
             findAndAssertCpk(
                 cpiId = cpi.metadata.cpiId,
                 cpkId = cpk.metadata.cpkId,
-                expectedCpkFileChecksum = cpk.csum,
-                expectedMetadataEntityVersion = 0,
-                expectedFileEntityVersion = 0,
-                expectedCpiCpkEntityVersion = 0
+                expectedCpkFileChecksum = cpk.csum
             )
         }
     }
@@ -293,15 +290,7 @@ internal class DatabaseCpiPersistenceTest {
         assertThat(cpiMetadataEntity.cpks.first().entityVersion).isEqualTo(0)
 
         // make same assertions but after loading the entity again
-        val initialLoadedCpi = entityManagerFactory.createEntityManager().transaction {
-            it.find(
-                CpiMetadataEntity::class.java, CpiMetadataEntityKey(
-                    cpi.metadata.cpiId.name,
-                    cpi.metadata.cpiId.version,
-                    cpi.metadata.cpiId.signerSummaryHash.toString(),
-                )
-            )
-        }!!
+        val initialLoadedCpi = loadCpiDirectFromDatabase(cpi)
 
         // adding cpk to cpi accounts for 1 modification
         assertThat(initialLoadedCpi.entityVersion).isEqualTo(1)
@@ -319,15 +308,7 @@ internal class DatabaseCpiPersistenceTest {
         assertThat(secondReturnedCpk.entityVersion).isEqualTo(0)
 
         // make same assertions but after loading the entity again
-        val updatedLoadedCpi = entityManagerFactory.createEntityManager().transaction {
-            it.find(
-                CpiMetadataEntity::class.java, CpiMetadataEntityKey(
-                    updatedCpi.metadata.cpiId.name,
-                    updatedCpi.metadata.cpiId.version,
-                    updatedCpi.metadata.cpiId.signerSummaryHash.toString(),
-                )
-            )
-        }!!
+        val updatedLoadedCpi = loadCpiDirectFromDatabase(updatedCpi)
 
         assertThat(updatedLoadedCpi.cpks.size).isEqualTo(2)
         assertThat(updatedLoadedCpi.entityVersion).isEqualTo(3)
@@ -354,15 +335,7 @@ internal class DatabaseCpiPersistenceTest {
             emptyList()
         )
 
-        val loadedCpi = entityManagerFactory.createEntityManager().transaction {
-            it.find(
-                CpiMetadataEntity::class.java, CpiMetadataEntityKey(
-                    cpi.metadata.cpiId.name,
-                    cpi.metadata.cpiId.version,
-                    cpi.metadata.cpiId.signerSummaryHash.toString(),
-                )
-            )
-        }!!
+        val loadedCpi = loadCpiDirectFromDatabase(cpi)
 
         // adding cpk to cpi accounts for 1 modification
         assertThat(loadedCpi.entityVersion).isEqualTo(1)
@@ -379,7 +352,17 @@ internal class DatabaseCpiPersistenceTest {
             emptyList()
         )
 
-        val updatedCpi = entityManagerFactory.createEntityManager().transaction {
+        val updatedCpi = loadCpiDirectFromDatabase(cpi)
+
+        assertThat(updatedCpi.insertTimestamp).isAfter(loadedCpi.insertTimestamp)
+        // merging updated cpi accounts for 1 modification + modifying cpk
+        assertThat(updatedCpi.entityVersion).isEqualTo(3)
+        assertThat(updatedCpi.cpks.size).isEqualTo(1)
+        assertThat(updatedCpi.cpks.first().entityVersion).isEqualTo(0)
+    }
+
+    private fun loadCpiDirectFromDatabase(cpi: Cpi) =
+        entityManagerFactory.createEntityManager().transaction {
             it.find(
                 CpiMetadataEntity::class.java, CpiMetadataEntityKey(
                     cpi.metadata.cpiId.name,
@@ -388,13 +371,6 @@ internal class DatabaseCpiPersistenceTest {
                 )
             )
         }!!
-
-        assertThat(updatedCpi.insertTimestamp).isAfter(loadedCpi.insertTimestamp)
-        // merging updated cpi accounts for 1 modification + modifying cpk
-        assertThat(updatedCpi.entityVersion).isEqualTo(3)
-        assertThat(updatedCpi.cpks.size).isEqualTo(1)
-        assertThat(updatedCpi.cpks.first().entityVersion).isEqualTo(0)
-    }
 
     @Test
     fun `CPKs are correct after persisting a CPI with already existing CPK`() {
@@ -425,18 +401,12 @@ internal class DatabaseCpiPersistenceTest {
         findAndAssertCpk(
             cpiId = cpi.metadata.cpiId,
             cpkId = sharedCpk.metadata.cpkId,
-            expectedCpkFileChecksum = sharedCpk.csum,
-            expectedMetadataEntityVersion = 0,
-            expectedFileEntityVersion = 0,
-            expectedCpiCpkEntityVersion = 0
+            expectedCpkFileChecksum = sharedCpk.csum
         )
         findAndAssertCpk(
             cpiId = cpi2.metadata.cpiId,
             cpkId = sharedCpk.metadata.cpkId,
-            expectedCpkFileChecksum = sharedCpk.csum,
-            expectedMetadataEntityVersion = 0,
-            expectedFileEntityVersion = 0,
-            expectedCpiCpkEntityVersion = 0
+            expectedCpkFileChecksum = sharedCpk.csum
         )
     }
 
@@ -465,18 +435,12 @@ internal class DatabaseCpiPersistenceTest {
         findAndAssertCpk(
             cpiId = cpi.metadata.cpiId,
             cpkId = cpk.metadata.cpkId,
-            expectedCpkFileChecksum = cpk.csum,
-            expectedMetadataEntityVersion = 0,
-            expectedFileEntityVersion = 0,
-            expectedCpiCpkEntityVersion = 0
+            expectedCpkFileChecksum = cpk.csum
         )
         findAndAssertCpk(
             cpiId = cpi.metadata.cpiId,
             cpkId = newCpk.metadata.cpkId,
-            expectedCpkFileChecksum = newCpk.csum,
-            expectedMetadataEntityVersion = 0,
-            expectedFileEntityVersion = 0,
-            expectedCpiCpkEntityVersion = 0
+            expectedCpkFileChecksum = newCpk.csum
         )
     }
 
@@ -539,10 +503,7 @@ internal class DatabaseCpiPersistenceTest {
         findAndAssertCpk(
             cpiId = cpi.metadata.cpiId,
             cpkId = cpk.metadata.cpkId,
-            expectedCpkFileChecksum = firstCpkChecksum.toString(),
-            expectedMetadataEntityVersion = 0,
-            expectedFileEntityVersion = 0,
-            expectedCpiCpkEntityVersion = 0
+            expectedCpkFileChecksum = firstCpkChecksum.toString()
         )
 
         // a new cpi object, but with same cpk
@@ -652,9 +613,9 @@ internal class DatabaseCpiPersistenceTest {
         cpiId: CpiIdentifier,
         cpkId: CpkIdentifier,
         expectedCpkFileChecksum: String,
-        expectedMetadataEntityVersion: Int,
-        expectedFileEntityVersion: Int,
-        expectedCpiCpkEntityVersion: Int
+        expectedMetadataEntityVersion: Int=0,
+        expectedFileEntityVersion: Int=0,
+        expectedCpiCpkEntityVersion: Int=0
     ) {
         val (cpkMetadata, cpkFile, cpiCpk) = entityManagerFactory.createEntityManager().transaction {
             val cpiCpkKey = CpiCpkKey(
