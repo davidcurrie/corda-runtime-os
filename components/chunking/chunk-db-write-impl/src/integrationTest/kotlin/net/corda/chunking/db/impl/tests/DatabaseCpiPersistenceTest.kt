@@ -240,8 +240,7 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `database cpi persistence can write multiple cpks into database`() {
-        val cpks = makeCpks(3)
-        val cpi = mockCpi(cpks)
+        val cpi = mockCpi(makeCpks(3))
         doPersist(cpi)
         assertThrows<PersistenceException> { doPersist(cpi) }
     }
@@ -249,50 +248,26 @@ internal class DatabaseCpiPersistenceTest {
     @Test
     fun `database cpi persistence can write multiple CPIs with shared CPKs into database`() {
         val (sharedCpk, cpk1, cpk2) = makeCpks(3)
-        val cpi1 = mockCpi(listOf(sharedCpk, cpk1))
 
+        val cpi1 = mockCpi(listOf(sharedCpk, cpk1))
         doPersist(cpi1, groupId="123456")
 
         val cpi2 = mockCpi(listOf(sharedCpk, cpk2))
-
         assertDoesNotThrow {
             doPersist(cpi2, groupId="123456")
         }
 
-        // no updates to existing CPKs have occurred hence why all entity versions are 0
-
-        findAndAssertCpk(
-            cpiId = cpi1.metadata.cpiId,
-            cpkId = sharedCpk.metadata.cpkId,
-            expectedCpkFileChecksum = sharedCpk.metadata.fileChecksum.toString(),
-            expectedMetadataEntityVersion = 0,
-            expectedFileEntityVersion = 0,
-            expectedCpiCpkEntityVersion = 0
-        )
-        findAndAssertCpk(
-            cpiId = cpi2.metadata.cpiId,
-            cpkId = sharedCpk.metadata.cpkId,
-            expectedCpkFileChecksum = sharedCpk.metadata.fileChecksum.toString(),
-            expectedMetadataEntityVersion = 0,
-            expectedFileEntityVersion = 0,
-            expectedCpiCpkEntityVersion = 0
-        )
-        findAndAssertCpk(
-            cpiId = cpi1.metadata.cpiId,
-            cpkId = cpk1.metadata.cpkId,
-            expectedCpkFileChecksum = cpk1.metadata.fileChecksum.toString(),
-            expectedMetadataEntityVersion = 0,
-            expectedFileEntityVersion = 0,
-            expectedCpiCpkEntityVersion = 0
-        )
-        findAndAssertCpk(
-            cpiId = cpi2.metadata.cpiId,
-            cpkId = cpk2.metadata.cpkId,
-            expectedCpkFileChecksum = cpk2.metadata.fileChecksum.toString(),
-            expectedMetadataEntityVersion = 0,
-            expectedFileEntityVersion = 0,
-            expectedCpiCpkEntityVersion = 0
-        )
+        listOf(Pair(cpi1, sharedCpk), Pair(cpi2, sharedCpk), Pair(cpi1, cpk1), Pair(cpi2, cpk2)).forEach { (cpi, cpk) ->
+            // no updates to existing CPKs have occurred hence why all entity versions are 0
+            findAndAssertCpk(
+                cpiId = cpi.metadata.cpiId,
+                cpkId = cpk.metadata.cpkId,
+                expectedCpkFileChecksum = cpk.metadata.fileChecksum.toString(),
+                expectedMetadataEntityVersion = 0,
+                expectedFileEntityVersion = 0,
+                expectedCpiCpkEntityVersion = 0
+            )
+        }
     }
 
     @Test
