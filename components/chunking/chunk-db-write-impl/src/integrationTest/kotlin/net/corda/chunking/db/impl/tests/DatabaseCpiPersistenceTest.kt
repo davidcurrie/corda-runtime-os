@@ -55,6 +55,8 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 
+val Cpk.csum: String get() = metadata.fileChecksum.toString()
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class DatabaseCpiPersistenceTest {
     companion object {
@@ -203,7 +205,7 @@ internal class DatabaseCpiPersistenceTest {
         val query = "FROM ${CpkFileEntity::class.simpleName} where fileChecksum = :cpkFileChecksum"
         val cpkDataEntity = entityManagerFactory.createEntityManager().transaction {
             it.createQuery(query, CpkFileEntity::class.java)
-                .setParameter("cpkFileChecksum", cpks.first().metadata.fileChecksum.toString())
+                .setParameter("cpkFileChecksum", cpks.first().csum)
                 .singleResult
         }!!
 
@@ -219,7 +221,7 @@ internal class DatabaseCpiPersistenceTest {
         assertThat(cpiPersistence.cpkExists(cpks.first().metadata.fileChecksum)).isTrue
     }
 
-    private fun doPersist(cpi: Cpi, filename: String="test.cpi", groupId: String = "abcdef") {
+    private fun doPersist(cpi: Cpi, filename: String="test.cpi", groupId: String = "abcdef"): CpiMetadataEntity =
         cpiPersistence.persistMetadataAndCpks(
             cpi,
             filename,
@@ -228,7 +230,6 @@ internal class DatabaseCpiPersistenceTest {
             groupId,
             emptyList()
         )
-    }
 
     private fun makeCpks(n: Int = 1): List<Cpk> =
         (1..n).map { mockCpk("${UUID.randomUUID()}.cpk", newRandomSecureHash()) }
@@ -262,7 +263,7 @@ internal class DatabaseCpiPersistenceTest {
             findAndAssertCpk(
                 cpiId = cpi.metadata.cpiId,
                 cpkId = cpk.metadata.cpkId,
-                expectedCpkFileChecksum = cpk.metadata.fileChecksum.toString(),
+                expectedCpkFileChecksum = cpk.csum,
                 expectedMetadataEntityVersion = 0,
                 expectedFileEntityVersion = 0,
                 expectedCpiCpkEntityVersion = 0
@@ -272,20 +273,10 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `database cpi persistence can force update a CPI`() {
-        val cpkChecksum = newRandomSecureHash()
-        val cpk1 = mockCpk("${UUID.randomUUID()}.cpk", cpkChecksum)
+        val (cpk1) = makeCpks()
         val cpi = mockCpi(listOf(cpk1))
         val cpiFileName = "test${UUID.randomUUID()}.cpi"
-
-        val cpiMetadataEntity =
-            cpiPersistence.persistMetadataAndCpks(
-                cpi,
-                cpiFileName,
-                newRandomSecureHash(),
-                UUID.randomUUID().toString(),
-                "abcdef",
-                emptyList()
-            )
+        val cpiMetadataEntity = doPersist(cpi, cpiFileName)
 
         assertThat(cpiMetadataEntity.entityVersion).isEqualTo(1)
         assertThat(cpiMetadataEntity.cpks.size).isEqualTo(1)
@@ -307,8 +298,8 @@ internal class DatabaseCpiPersistenceTest {
         assertThat(initialLoadedCpi.cpks.size).isEqualTo(1)
         assertThat(initialLoadedCpi.cpks.first().entityVersion).isEqualTo(0)
 
-        val updatedCpkChecksum = newRandomSecureHash()
-        val updatedCpks = listOf(cpk1, mockCpk("${UUID.randomUUID()}.cpk", updatedCpkChecksum))
+        val (updatedCpk) = makeCpks()
+        val updatedCpks = listOf(cpk1, updatedCpk)
         // cpi with different CPKs but same ID
         val updatedCpi = mockCpiWithId(updatedCpks, cpi.metadata.cpiId)
 
@@ -323,8 +314,8 @@ internal class DatabaseCpiPersistenceTest {
             )
 
         assertThat(returnedCpiMetadataEntity.entityVersion).isEqualTo(3)
-        val firstReturnedCpk = returnedCpiMetadataEntity.cpks.first { it.cpkFileChecksum == cpkChecksum.toString() }
-        val secondReturnedCpk = returnedCpiMetadataEntity.cpks.first { it.cpkFileChecksum == updatedCpkChecksum.toString() }
+        val firstReturnedCpk = returnedCpiMetadataEntity.cpks.first { it.cpkFileChecksum == cpk1.csum }
+        val secondReturnedCpk = returnedCpiMetadataEntity.cpks.first { it.cpkFileChecksum == updatedCpk.csum }
         assertThat(firstReturnedCpk.entityVersion).isEqualTo(0)
         assertThat(secondReturnedCpk.entityVersion).isEqualTo(0)
 
@@ -341,8 +332,8 @@ internal class DatabaseCpiPersistenceTest {
 
         assertThat(updatedLoadedCpi.cpks.size).isEqualTo(2)
         assertThat(updatedLoadedCpi.entityVersion).isEqualTo(3)
-        val firstCpk = updatedLoadedCpi.cpks.first { it.cpkFileChecksum == cpkChecksum.toString() }
-        val secondCpk = updatedLoadedCpi.cpks.first { it.cpkFileChecksum == updatedCpkChecksum.toString() }
+        val firstCpk = updatedLoadedCpi.cpks.first { it.cpkFileChecksum == cpk1.csum }
+        val secondCpk = updatedLoadedCpi.cpks.first { it.cpkFileChecksum == updatedCpk.csum }
         assertThat(firstCpk.entityVersion).isEqualTo(0)
         assertThat(secondCpk.entityVersion).isEqualTo(0)
     }
@@ -435,7 +426,7 @@ internal class DatabaseCpiPersistenceTest {
         findAndAssertCpk(
             cpiId = cpi.metadata.cpiId,
             cpkId = sharedCpk.metadata.cpkId,
-            expectedCpkFileChecksum = sharedCpk.metadata.fileChecksum.toString(),
+            expectedCpkFileChecksum = sharedCpk.csum,
             expectedMetadataEntityVersion = 0,
             expectedFileEntityVersion = 0,
             expectedCpiCpkEntityVersion = 0
@@ -443,7 +434,7 @@ internal class DatabaseCpiPersistenceTest {
         findAndAssertCpk(
             cpiId = cpi2.metadata.cpiId,
             cpkId = sharedCpk.metadata.cpkId,
-            expectedCpkFileChecksum = sharedCpk.metadata.fileChecksum.toString(),
+            expectedCpkFileChecksum = sharedCpk.csum,
             expectedMetadataEntityVersion = 0,
             expectedFileEntityVersion = 0,
             expectedCpiCpkEntityVersion = 0
