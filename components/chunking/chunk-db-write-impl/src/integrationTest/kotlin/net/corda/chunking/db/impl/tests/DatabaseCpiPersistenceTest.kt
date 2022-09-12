@@ -515,14 +515,25 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `persist multiple changelogs writes data and can be read back`() {
-        val cpks = makeCpks(10)
+        val cpks = makeCpks(5)
         val cpi = mockCpi(cpks = cpks)
         cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(cpks))
 
         val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("content", mockChangeLogContent)
 
-        assertThat(changeLogsRetrieved.size).isGreaterThanOrEqualTo(10)
+        assertThat(changeLogsRetrieved.size).isGreaterThanOrEqualTo(5)
         assertThat(changeLogsRetrieved.first().content).isEqualTo(mockChangeLogContent)
+    }
+
+    @Test
+    fun `version number of changelog increases when changelogs are updated`() {
+        val cpks = makeCpks(5)
+        cpks.forEach {
+            val cpi = mockCpi(it)
+            cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(cpks = arrayOf(it)))
+            // check version number is as expected
+            // TODO
+        }
     }
 
     private inline fun <reified T : Any, K> query(key: String, value: K): List<T> {
