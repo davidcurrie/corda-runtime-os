@@ -508,24 +508,25 @@ internal class DatabaseCpiPersistenceTest {
         }
     }
 
+
+    private fun makeChangeLogs(cpks: List<Cpk>) = cpks.map {
+        CpkDbChangeLogEntity(
+            CpkDbChangeLogKey(
+                it.metadata.cpkId.name,
+                it.metadata.cpkId.version,
+                it.metadata.cpkId.signerSummaryHash.toString(),
+                "resources/db.changelog-master.xml"
+            ),
+            newRandomSecureHash().toString(),
+            "lorum ipsum"
+        )
+    }
+
     @Test
     fun `persist changelog writes data and can be read back`() {
         val (cpk) = makeCpks()
         val cpi = mockCpi(listOf(cpk))
-        cpiPersistence.persistMetadataAndCpks(
-            cpi, cpkDbChangeLogEntities = listOf(
-                CpkDbChangeLogEntity(
-                    CpkDbChangeLogKey(
-                        cpk.metadata.cpkId.name,
-                        cpk.metadata.cpkId.version,
-                        cpk.metadata.cpkId.signerSummaryHash.toString(),
-                        "resources/db.changelog-master.xml"
-                    ),
-                    newRandomSecureHash().toString(),
-                    "lorum ipsum"
-                )
-            )
-        )
+        cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(listOf(cpk)))
 
         val query = "FROM ${CpkDbChangeLogEntity::class.simpleName} where cpk_name = :cpkName"
         val changeLogsRetrieved = entityManagerFactory.createEntityManager().transaction {
