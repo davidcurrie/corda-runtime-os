@@ -298,15 +298,7 @@ internal class DatabaseCpiPersistenceTest {
         assertThat(loadedCpi.cpks.size).isEqualTo(1)
         assertThat(loadedCpi.cpks.first().entityVersion).isEqualTo(0)
 
-        // force update same CPI
-        cpiPersistence.updateMetadataAndCpks(
-            cpi,
-            "test.cpi",
-            cpiChecksum,
-            UUID.randomUUID().toString(),
-            "abcdef",
-            emptyList()
-        )
+        cpiPersistence.updateMetadataAndCpks(cpi, checksum = cpiChecksum)  // force update same CPI
 
         val updatedCpi = loadCpiDirectFromDatabase(cpi)
 
