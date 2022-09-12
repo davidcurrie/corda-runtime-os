@@ -487,7 +487,7 @@ internal class DatabaseCpiPersistenceTest {
     }
 
 
-    private fun makeChangeLogs(cpks: List<Cpk>) = cpks.map {
+    private fun makeChangeLogs(cpks: Array<Cpk>) = cpks.map {
         CpkDbChangeLogEntity(
             CpkDbChangeLogKey(
                 it.metadata.cpkId.name,
@@ -504,11 +504,23 @@ internal class DatabaseCpiPersistenceTest {
     fun `persist changelog writes data and can be read back`() {
         val (cpk) = makeCpks()
         val cpi = mockCpi(cpk)
-        cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(listOf(cpk)))
+        cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(arrayOf(cpk)))
 
         val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("cpk_name", cpk.metadata.cpkId.name)
 
-        assertThat(changeLogsRetrieved.size).isEqualTo(1)
+        assertThat(changeLogsRetrieved.size).isGreaterThanOrEqualTo(1)
+        assertThat(changeLogsRetrieved.first().content).isEqualTo("lorum ipsum")
+    }
+
+    @Test
+    fun `persist multiple changelogs writes data and can be read back`() {
+        val cpks = makeCpks(10)
+        val cpi = mockCpi(cpks = cpks)
+        cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(cpks))
+
+        val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("contenadd, "lorum ipsum")
+
+        assertThat(changeLogsRetrieved.size).isGreaterThanOrEqualTo(10)
         assertThat(changeLogsRetrieved.first().content).isEqualTo("lorum ipsum")
     }
 
