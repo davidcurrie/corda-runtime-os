@@ -15,20 +15,7 @@ import net.corda.db.admin.impl.ClassloaderChangeLog
 import net.corda.db.admin.impl.LiquibaseSchemaMigratorImpl
 import net.corda.db.schema.DbSchema
 import net.corda.db.testkit.DbUtils
-import net.corda.libs.cpi.datamodel.CpiCpkEntity
-import net.corda.libs.cpi.datamodel.CpiCpkKey
-import net.corda.libs.cpi.datamodel.CpiEntities
-import net.corda.libs.cpi.datamodel.CpiMetadataEntity
-import net.corda.libs.cpi.datamodel.CpiMetadataEntityKey
-import net.corda.libs.cpi.datamodel.CpkFileEntity
-import net.corda.libs.cpi.datamodel.CpkKey
-import net.corda.libs.cpi.datamodel.CpkMetadataEntity
-import net.corda.libs.cpi.datamodel.QUERY_NAME_UPDATE_CPK_FILE_DATA
-import net.corda.libs.cpi.datamodel.QUERY_PARAM_DATA
-import net.corda.libs.cpi.datamodel.QUERY_PARAM_ENTITY_VERSION
-import net.corda.libs.cpi.datamodel.QUERY_PARAM_FILE_CHECKSUM
-import net.corda.libs.cpi.datamodel.QUERY_PARAM_ID
-import net.corda.libs.cpi.datamodel.QUERY_PARAM_INCREMENTED_ENTITY_VERSION
+import net.corda.libs.cpi.datamodel.*
 import net.corda.libs.packaging.Cpi
 import net.corda.libs.packaging.Cpk
 import net.corda.libs.packaging.core.CordappManifest
@@ -221,24 +208,34 @@ internal class DatabaseCpiPersistenceTest {
         assertThat(cpiPersistence.cpkExists(cpks.first().metadata.fileChecksum)).isTrue
     }
 
-    private fun doPersist(cpi: Cpi, filename: String="test.cpi", groupId: String = "abcdef"): CpiMetadataEntity =
+    private fun doPersist(
+        cpi: Cpi,
+        filename: String = "test.cpi",
+        groupId: String = "abcdef",
+        changeLogs: List<CpkDbChangeLogEntity> = emptyList()
+    ): CpiMetadataEntity =
         cpiPersistence.persistMetadataAndCpks(
             cpi,
             filename,
             newRandomSecureHash(),
             UUID.randomUUID().toString(),
             groupId,
-            emptyList()
+            changeLogs
         )
 
-    private fun doUpdate(cpi: Cpi, filename: String="test.cpi", groupId: String = "abcdef"): CpiMetadataEntity =
+    private fun doUpdate(
+        cpi: Cpi,
+        filename: String = "test.cpi",
+        groupId: String = "abcdef",
+        changeLogs: List<CpkDbChangeLogEntity> = emptyList()
+    ): CpiMetadataEntity =
         cpiPersistence.updateMetadataAndCpks(
             cpi,
             filename,
             newRandomSecureHash(),
             UUID.randomUUID().toString(),
             groupId,
-            emptyList()
+            changeLogs
         )
 
     private fun makeCpks(n: Int = 1): List<Cpk> =
@@ -539,5 +536,37 @@ internal class DatabaseCpiPersistenceTest {
                 .withFailMessage("CpiCpkEntity.entityVersion expected $expectedCpiCpkEntityVersion but was ${cpiCpk.entityVersion}.")
                 .isEqualTo(expectedCpiCpkEntityVersion)
         }
+    }
+
+    @Test
+    fun `persist changelog writes data and can be read back`() {
+        val (cpk) = makeCpks()
+        val cpi = mockCpi(
+            listOf(cpk),
+
+            )
+        doPersist(
+            cpi, changeLogs = listOf(
+                CpkDbChangeLogEntity(
+                    CpkDbChangeLogKey(
+                        cpk.metadata.cpkId.name,
+                        cpk.metadata.cpkId.version,
+                        cpk.metadata.cpkId.signerSummaryHash.toString(),
+                        "resources/db.changelog-master.xml"
+                    ),
+                    newRandomSecureHash().toString(),
+                    "lorum ipsum"
+                )
+            )
+        )
+
+        val query = "FROM ${CpkDbChangeLogEntity::class.simpleName} where cpk_name = :cpkName"
+        val changeLogRetrieved = entityManagerFactory.createEntityManager().transaction {
+            it.createQuery(query, CpkDbChangeLogEntity::class.java)
+                .setParameter("cpkName", cpk.metadata.cpkId.name)
+                .singleResult
+        }!!
+
+        assertThat(changeLogRetrieved.content).isEqualTo("lorum ipsum")
     }
 }
