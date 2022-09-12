@@ -58,6 +58,7 @@ internal class DatabaseCpiPersistenceTest {
         emConfig
     )
     private val cpiPersistence = DatabaseCpiPersistence(entityManagerFactory)
+    private val mockChangeLogContent = "lorum ipsum"
     private val mockCpkContent = """
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin id mauris ut tortor 
             condimentum porttitor. Praesent commodo, ipsum vitae malesuada placerat, nisl sem 
@@ -496,7 +497,7 @@ internal class DatabaseCpiPersistenceTest {
                 "resources/db.changelog-master.xml"
             ),
             newRandomSecureHash().toString(),
-            "lorum ipsum"
+            mockChangeLogContent
         )
     }
 
@@ -509,7 +510,7 @@ internal class DatabaseCpiPersistenceTest {
         val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("cpk_name", cpk.metadata.cpkId.name)
 
         assertThat(changeLogsRetrieved.size).isGreaterThanOrEqualTo(1)
-        assertThat(changeLogsRetrieved.first().content).isEqualTo("lorum ipsum")
+        assertThat(changeLogsRetrieved.first().content).isEqualTo(mockChangeLogContent)
     }
 
     @Test
@@ -518,10 +519,10 @@ internal class DatabaseCpiPersistenceTest {
         val cpi = mockCpi(cpks = cpks)
         cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(cpks))
 
-        val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("contenadd, "lorum ipsum")
+        val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("content", mockChangeLogContent)
 
         assertThat(changeLogsRetrieved.size).isGreaterThanOrEqualTo(10)
-        assertThat(changeLogsRetrieved.first().content).isEqualTo("lorum ipsum")
+        assertThat(changeLogsRetrieved.first().content).isEqualTo(mockChangeLogContent)
     }
 
     private inline fun <reified T : Any, K> query(key: String, value: K): List<T> {
