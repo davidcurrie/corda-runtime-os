@@ -399,8 +399,7 @@ internal class DatabaseCpiPersistenceTest {
         val updatedCpk = updatedCpk(cpk.metadata.cpkId, newChecksum)
         val cpi = mockCpi(listOf(cpk))
         doPersist(cpi, groupId = "group-a")
-        // a new cpi object, but with same ID
-        val updatedCpi = mockCpiWithId(listOf(updatedCpk), cpi.metadata.cpiId)
+        val updatedCpi = mockCpiWithId(listOf(updatedCpk), cpi.metadata.cpiId)  // a new cpi object, but with same ID
         doUpdate(updatedCpi, groupId = "group-b")
         assertThat(cpi.metadata.cpiId).isEqualTo(updatedCpi.metadata.cpiId)
         // we have updated an existing CPK with a new checksum (and data) hence why its entityVersion has incremented.
@@ -462,15 +461,7 @@ internal class DatabaseCpiPersistenceTest {
         val cpk = mockCpk("$testId.cpk", firstCpkChecksum)
         val cpi = mockCpi(listOf(cpk))
 
-        cpiPersistence.persistMetadataAndCpks(
-            cpi,
-            "$testId.cpi",
-            newRandomSecureHash(),
-            UUID.randomUUID().toString(),
-            "group-a",
-            emptyList()
-        )
-
+        doPersist(cpi, "$testId.cpi", "group-a")
         val cpkKey = cpk.metadata.cpkId.toCpkKey()
         val initialFile = entityManagerFactory.createEntityManager().transaction {
             it.find(CpkFileEntity::class.java, cpkKey)
