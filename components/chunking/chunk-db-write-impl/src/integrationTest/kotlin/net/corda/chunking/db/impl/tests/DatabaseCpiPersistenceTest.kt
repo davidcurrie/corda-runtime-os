@@ -153,7 +153,7 @@ internal class DatabaseCpiPersistenceTest {
         whenever(cpk.metadata).thenReturn(metadata)
     }
 
-    private fun mockCpi(cpks: Collection<Cpk>): Cpi {
+    private fun mockCpi(vararg cpks: Cpk): Cpi {
         // We need a random name here as the database primary key is (name, version, signerSummaryHash)
         // and we'd end up trying to insert the same mock cpi.
         val id = mock<CpiIdentifier> {
@@ -165,14 +165,14 @@ internal class DatabaseCpiPersistenceTest {
         return mockCpiWithId(cpks, id)
     }
 
-    private fun mockCpiWithId(cpks: Collection<Cpk>, cpiId: CpiIdentifier): Cpi {
+    private fun mockCpiWithId(cpks: Array<out Cpk>, cpiId: CpiIdentifier): Cpi {
         val metadata = mock<CpiMetadata>().also {
             whenever(it.cpiId).thenReturn(cpiId)
             whenever(it.groupPolicy).thenReturn("{}")
         }
 
         val cpi = mock<Cpi>().also {
-            whenever(it.cpks).thenReturn(cpks)
+            whenever(it.cpks).thenReturn(cpks.toList())
             whenever(it.metadata).thenReturn(metadata)
         }
 
@@ -186,7 +186,7 @@ internal class DatabaseCpiPersistenceTest {
     @Test
     fun `database cpi persistence writes data and can be read back`() {
         val (cpk) = makeCpks()
-        val cpi = mockCpi(listOf(cpk))
+        val cpi = mockCpi(cpk)
         cpiPersistence.persistMetadataAndCpks(cpi)
 
         val cpkDataEntities: List<CpkFileEntity> = query("fileChecksum", cpk.csum)
@@ -195,15 +195,15 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `database cpi persistence can lookup persisted cpi by checksum`() {
-        val cpks = makeCpks()
-        assertThat(cpiPersistence.cpkExists(cpks.first().metadata.fileChecksum)).isFalse
-        val cpi = mockCpi(cpks)
+        val (cpk) = makeCpks()
+        assertThat(cpiPersistence.cpkExists(cpk.metadata.fileChecksum)).isFalse
+        val cpi = mockCpi(cpk)
         cpiPersistence.persistMetadataAndCpks(cpi, "someFileName.cpi")
-        assertThat(cpiPersistence.cpkExists(cpks.first().metadata.fileChecksum)).isTrue
+        assertThat(cpiPersistence.cpkExists(cpk.metadata.fileChecksum)).isTrue
     }
 
-    private fun makeCpks(n: Int = 1): List<Cpk> =
-        (1..n).map { mockCpk("${UUID.randomUUID()}.cpk", newRandomSecureHash()) }
+    private fun makeCpks(n: Int = 1): Array<Cpk> =
+        (1..n).map { mockCpk("${UUID.randomUUID()}.cpk", newRandomSecureHash()) }.toTypedArray()
 
     private val random = Random(0)
     private fun newRandomSecureHash(): SecureHash {
@@ -212,7 +212,7 @@ internal class DatabaseCpiPersistenceTest {
 
     @Test
     fun `database cpi persistence can write multiple cpks into database`() {
-        val cpi = mockCpi(makeCpks(3))
+        val cpi = mockCpi(cpks = makeCpks(3))
         cpiPersistence.persistMetadataAndCpks(cpi)
         assertThrows<PersistenceException> { cpiPersistence.persistMetadataAndCpks(cpi) }
     }
@@ -221,10 +221,10 @@ internal class DatabaseCpiPersistenceTest {
     fun `database cpi persistence can write multiple CPIs with shared CPKs into database`() {
         val (sharedCpk, cpk1, cpk2) = makeCpks(3)
 
-        val cpi1 = mockCpi(listOf(sharedCpk, cpk1))
+        val cpi1 = mockCpi(sharedCpk, cpk1)
         cpiPersistence.persistMetadataAndCpks(cpi1)
 
-        val cpi2 = mockCpi(listOf(sharedCpk, cpk2))
+        val cpi2 = mockCpi(sharedCpk, cpk2)
         assertDoesNotThrow {
             cpiPersistence.persistMetadataAndCpks(cpi2)
         }
@@ -236,7 +236,7 @@ internal class DatabaseCpiPersistenceTest {
     @Test
     fun `database cpi persistence can force update a CPI`() {
         val (cpk1) = makeCpks()
-        val cpi = mockCpi(listOf(cpk1))
+        val cpi = mockCpi(cpk1)
         val cpiFileName = "test${UUID.randomUUID()}.cpi"
         val cpiMetadataEntity = cpiPersistence.persistMetadataAndCpks(cpi, cpiFileName)
 
@@ -254,7 +254,7 @@ internal class DatabaseCpiPersistenceTest {
 
         val (updatedCpk) = makeCpks()
         val updatedCpi =
-            mockCpiWithId(listOf(cpk1, updatedCpk), cpi.metadata.cpiId) // cpi with different CPKs but same ID
+            mockCpiWithId(arrayOf(cpk1, updatedCpk), cpi.metadata.cpiId) // cpi with different CPKs but same ID
         val returnedCpiMetadataEntity = cpiPersistence.updateMetadataAndCpks(updatedCpi)
 
         fun verifyDoubleCpi(
@@ -280,8 +280,7 @@ internal class DatabaseCpiPersistenceTest {
         val cpiChecksum = newRandomSecureHash()
         val cpkChecksum = newRandomSecureHash()
         val cpk1 = mockCpk("${UUID.randomUUID()}.cpk", cpkChecksum)
-        val cpks = listOf(cpk1)
-        val cpi = mockCpi(cpks)
+        val cpi = mockCpi(cpk1)
 
         cpiPersistence.persistMetadataAndCpks(cpi, "test.cpi", cpiChecksum)
 
@@ -317,9 +316,9 @@ internal class DatabaseCpiPersistenceTest {
     @Test
     fun `CPKs are correct after persisting a CPI with already existing CPK`() {
         val (sharedCpk) = makeCpks()
-        val cpi = mockCpi(listOf(sharedCpk))
+        val cpi = mockCpi(sharedCpk)
         cpiPersistence.persistMetadataAndCpks(cpi, groupId = "group-a")
-        val cpi2 = mockCpi(listOf(sharedCpk))
+        val cpi2 = mockCpi(sharedCpk)
         cpiPersistence.persistMetadataAndCpks(cpi2, cpiFileName = "test2.cpi", groupId = "group-b")
         // no updates to existing CPKs have occurred hence why all entity versions are 0
         findAndAssertCpks(listOf(Pair(cpi, sharedCpk), Pair(cpi2, sharedCpk)))
@@ -328,10 +327,10 @@ internal class DatabaseCpiPersistenceTest {
     @Test
     fun `CPKs are correct after updating a CPI by adding a new CPK`() {
         val (cpk, newCpk) = makeCpks(2)
-        val cpi = mockCpi(listOf(cpk))
+        val cpi = mockCpi(cpk)
         cpiPersistence.persistMetadataAndCpks(cpi, groupId = "group-a")
         // a new cpi object, but with same ID and added new CPK
-        val updatedCpi = mockCpiWithId(listOf(cpk, newCpk), cpi.metadata.cpiId)
+        val updatedCpi = mockCpiWithId(arrayOf(cpk, newCpk), cpi.metadata.cpiId)
         cpiPersistence.updateMetadataAndCpks(updatedCpi, groupId = "group-b")
         assertThat(cpi.metadata.cpiId).isEqualTo(updatedCpi.metadata.cpiId)
         // no updates to existing CPKs have occurred hence why all entity versions are 0. We are updating a CPI by adding a new CPK to it
@@ -343,9 +342,9 @@ internal class DatabaseCpiPersistenceTest {
         val (cpk) = makeCpks()
         val newChecksum = newRandomSecureHash()
         val updatedCpk = updatedCpk(cpk.metadata.cpkId, newChecksum)
-        val cpi = mockCpi(listOf(cpk))
+        val cpi = mockCpi(cpk)
         cpiPersistence.persistMetadataAndCpks(cpi, groupId = "group-a")
-        val updatedCpi = mockCpiWithId(listOf(updatedCpk), cpi.metadata.cpiId)  // a new cpi object, but with same ID
+        val updatedCpi = mockCpiWithId(arrayOf(updatedCpk), cpi.metadata.cpiId)  // a new cpi object, but with same ID
         cpiPersistence.updateMetadataAndCpks(updatedCpi, groupId = "group-b")
         assertThat(cpi.metadata.cpiId).isEqualTo(updatedCpi.metadata.cpiId)
         // we have updated an existing CPK with a new checksum (and data) hence why its entityVersion has incremented.
@@ -361,14 +360,14 @@ internal class DatabaseCpiPersistenceTest {
     @Test
     fun `CPK version is incremented when CpiCpkEntity has non-zero entityversion`() {
         val (cpk) = makeCpks()
-        val cpi = mockCpi(listOf(cpk))
+        val cpi = mockCpi(cpk)
         cpiPersistence.persistMetadataAndCpks(cpi, groupId = "group-a")
         findAndAssertCpks(listOf(Pair(cpi, cpk)))
 
         // a new cpi object, but with same cpk
         val secondCpkChecksum = newRandomSecureHash()
         val updatedCpk = updatedCpk(cpk.metadata.cpkId, secondCpkChecksum)
-        val updatedCpi = mockCpiWithId(listOf(updatedCpk), cpi.metadata.cpiId)
+        val updatedCpi = mockCpiWithId(arrayOf(updatedCpk), cpi.metadata.cpiId)
 
         cpiPersistence.updateMetadataAndCpks(updatedCpi, groupId = "group-b")
 
@@ -384,7 +383,7 @@ internal class DatabaseCpiPersistenceTest {
         // a new cpi object, but with same cpk
         val thirdChecksum = newRandomSecureHash()
         val anotherUpdatedCpk = updatedCpk(cpk.metadata.cpkId, thirdChecksum)
-        val anotherUpdatedCpi = mockCpiWithId(listOf(anotherUpdatedCpk), cpi.metadata.cpiId)
+        val anotherUpdatedCpi = mockCpiWithId(arrayOf(anotherUpdatedCpk), cpi.metadata.cpiId)
 
         cpiPersistence.updateMetadataAndCpks(anotherUpdatedCpi, groupId = "group-b")
 
@@ -405,7 +404,7 @@ internal class DatabaseCpiPersistenceTest {
 
         val firstCpkChecksum = newRandomSecureHash()
         val cpk = mockCpk("$testId.cpk", firstCpkChecksum)
-        val cpi = mockCpi(listOf(cpk))
+        val cpi = mockCpi(cpk)
 
         cpiPersistence.persistMetadataAndCpks(cpi, "$testId.cpi", groupId = "group-a")
         val cpkKey = cpk.metadata.cpkId.toCpkKey()
@@ -504,7 +503,7 @@ internal class DatabaseCpiPersistenceTest {
     @Test
     fun `persist changelog writes data and can be read back`() {
         val (cpk) = makeCpks()
-        val cpi = mockCpi(listOf(cpk))
+        val cpi = mockCpi(cpk)
         cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(listOf(cpk)))
 
         val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("cpk_name", cpk.metadata.cpkId.name)
