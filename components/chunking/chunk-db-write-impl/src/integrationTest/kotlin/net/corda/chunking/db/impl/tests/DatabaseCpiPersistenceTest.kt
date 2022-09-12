@@ -561,12 +561,13 @@ internal class DatabaseCpiPersistenceTest {
         )
 
         val query = "FROM ${CpkDbChangeLogEntity::class.simpleName} where cpk_name = :cpkName"
-        val changeLogRetrieved = entityManagerFactory.createEntityManager().transaction {
+        val changeLogsRetrieved = entityManagerFactory.createEntityManager().transaction {
             it.createQuery(query, CpkDbChangeLogEntity::class.java)
                 .setParameter("cpkName", cpk.metadata.cpkId.name)
-                .singleResult
-        }!!
+                .resultList
+        }
 
-        assertThat(changeLogRetrieved.content).isEqualTo("lorum ipsum")
+        assertThat(changeLogsRetrieved.size).isEqualTo(1)
+        assertThat(changeLogsRetrieved.first().content).isEqualTo("lorum ipsum")
     }
 }
