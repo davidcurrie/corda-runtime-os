@@ -289,14 +289,7 @@ internal class DatabaseCpiPersistenceTest {
         val cpks = listOf(cpk1)
         val cpi = mockCpi(cpks)
 
-        cpiPersistence.persistMetadataAndCpks(
-            cpi,
-            "test.cpi",
-            cpiChecksum,
-            UUID.randomUUID().toString(),
-            "abcdef",
-            emptyList()
-        )
+        cpiPersistence.persistMetadataAndCpks(cpi, "test.cpi", cpiChecksum)
 
         val loadedCpi = loadCpiDirectFromDatabase(cpi)
 
