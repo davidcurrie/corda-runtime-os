@@ -228,11 +228,11 @@ internal class DatabaseCpiPersistenceTest {
         val (sharedCpk, cpk1, cpk2) = makeCpks(3)
 
         val cpi1 = mockCpi(listOf(sharedCpk, cpk1))
-        cpiPersistence.persistMetadataAndCpks(cpi1, groupId = "123456")
+        cpiPersistence.persistMetadataAndCpks(cpi1)
 
         val cpi2 = mockCpi(listOf(sharedCpk, cpk2))
         assertDoesNotThrow {
-            cpiPersistence.persistMetadataAndCpks(cpi2, groupId = "123456")
+            cpiPersistence.persistMetadataAndCpks(cpi2)
         }
 
         // no updates to existing CPKs have occurred hence why all entity versions are 0
