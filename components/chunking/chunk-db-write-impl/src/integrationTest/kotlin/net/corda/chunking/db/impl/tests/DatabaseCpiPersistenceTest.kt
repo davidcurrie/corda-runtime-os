@@ -528,15 +528,19 @@ internal class DatabaseCpiPersistenceTest {
         val cpi = mockCpi(listOf(cpk))
         cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(listOf(cpk)))
 
-        val query = "FROM ${CpkDbChangeLogEntity::class.simpleName} where cpk_name = :cpkName"
-        val changeLogsRetrieved = entityManagerFactory.createEntityManager().transaction {
-            it.createQuery(query, CpkDbChangeLogEntity::class.java)
-                .setParameter("cpkName", cpk.metadata.cpkId.name)
-                .resultList
-        }
+        val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("cpk_name", cpk.metadata.cpkId.name)!!
 
         assertThat(changeLogsRetrieved.size).isEqualTo(1)
         assertThat(changeLogsRetrieved.first().content).isEqualTo("lorum ipsum")
+    }
+
+    private inline fun <reified T : Any, K> query(key: String, value: K): List<T>? {
+        val query = "FROM ${T::class.simpleName} where $key = :value"
+        return entityManagerFactory.createEntityManager().transaction {
+            it.createQuery(query, T::class.java)
+                .setParameter("value", value)
+                .resultList
+        }
     }
 }
 
