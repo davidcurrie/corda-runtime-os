@@ -185,18 +185,12 @@ internal class DatabaseCpiPersistenceTest {
      */
     @Test
     fun `database cpi persistence writes data and can be read back`() {
-        val cpks = makeCpks()
-        val cpi = mockCpi(cpks)
+        val (cpk) = makeCpks()
+        val cpi = mockCpi(listOf(cpk))
         cpiPersistence.persistMetadataAndCpks(cpi)
 
-        val query = "FROM ${CpkFileEntity::class.simpleName} where fileChecksum = :cpkFileChecksum"
-        val cpkDataEntity = entityManagerFactory.createEntityManager().transaction {
-            it.createQuery(query, CpkFileEntity::class.java)
-                .setParameter("cpkFileChecksum", cpks.first().csum)
-                .singleResult
-        }!!
-
-        assertThat(cpkDataEntity.data).isEqualTo(mockCpkContent.toByteArray())
+        val cpkDataEntities: List<CpkFileEntity> = query("fileChecksum", cpk.csum)
+        assertThat(cpkDataEntities.first().data).isEqualTo(mockCpkContent.toByteArray())
     }
 
     @Test
@@ -513,19 +507,19 @@ internal class DatabaseCpiPersistenceTest {
         val cpi = mockCpi(listOf(cpk))
         cpiPersistence.persistMetadataAndCpks(cpi, cpkDbChangeLogEntities = makeChangeLogs(listOf(cpk)))
 
-        val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("cpk_name", cpk.metadata.cpkId.name)!!
+        val changeLogsRetrieved = query<CpkDbChangeLogEntity, String>("cpk_name", cpk.metadata.cpkId.name)
 
         assertThat(changeLogsRetrieved.size).isEqualTo(1)
         assertThat(changeLogsRetrieved.first().content).isEqualTo("lorum ipsum")
     }
 
-    private inline fun <reified T : Any, K> query(key: String, value: K): List<T>? {
+    private inline fun <reified T : Any, K> query(key: String, value: K): List<T> {
         val query = "FROM ${T::class.simpleName} where $key = :value"
         return entityManagerFactory.createEntityManager().transaction {
             it.createQuery(query, T::class.java)
                 .setParameter("value", value)
                 .resultList
-        }
+        }!!
     }
 }
 
