@@ -138,7 +138,7 @@ publishing {
             maven(MavenPublication) {
                 artifactId "corda-cli-installer-script"
                 groupId project.group
-                artifact s3Script
+                artifact cliInstallScriptsS3
             }
         }
     }
