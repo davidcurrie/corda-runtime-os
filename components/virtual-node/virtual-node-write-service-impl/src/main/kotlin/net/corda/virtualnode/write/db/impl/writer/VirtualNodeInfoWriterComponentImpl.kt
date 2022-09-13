@@ -138,7 +138,6 @@ class VirtualNodeInfoWriterComponentImpl @Activate constructor(
      * require as defined in [onNewConfiguration]
      */
     private fun onConfigChangedEventReceived(coordinator: LifecycleCoordinator, event: ConfigChangedEvent) {
-        coordinator.updateStatus(LifecycleStatus.DOWN)
         recreatePublisher(event)
         coordinator.updateStatus(LifecycleStatus.UP)
     }
