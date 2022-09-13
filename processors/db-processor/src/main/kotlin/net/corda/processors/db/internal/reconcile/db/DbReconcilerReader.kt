@@ -76,7 +76,10 @@ class DbReconcilerReader<K : Any, V : Any>(
             logger.info("Switching to UP")
             coordinator.updateStatus(LifecycleStatus.UP)
         } else {
-            logger.info("Switching to ${event.status}.")
+            logger.info(
+                "Received a ${RegistrationStatusChangeEvent::class.java.simpleName} with status ${event.status}. " +
+                        "Switching to ${event.status}"
+            )
             coordinator.updateStatus(event.status)
             closeResources()
         }

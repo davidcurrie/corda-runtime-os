@@ -131,7 +131,10 @@ class VirtualNodeInfoWriterComponentImpl @Activate constructor(
                 setOf(ConfigKeys.MESSAGING_CONFIG)
             )
         } else {
-            log.info("Switching to ${event.status}")
+            log.info(
+                "Received a ${RegistrationStatusChangeEvent::class.java.simpleName} with status ${event.status}. " +
+                        "Switching to ${event.status}"
+            )
             coordinator.updateStatus(event.status)
             configSubscription?.close()
         }
