@@ -8,6 +8,20 @@ flows or handle more than one version of any Flow.  It is intended only for low-
 quick feedback and documenting examples of how things work) or demoing CorDapps. For full testing, use a real or
 production-like implementation of Corda.
 
+## Setting up dependencies
+
+You will need to set up the following dependencies in your build file, assuming you are using this for testing:
+
+```
+      testImplementation "net.corda:simulator-api:$simulatorVersion"
+      testRuntimeOnly "net.corda:simulator-runtime:$simulatorVersion"
+```
+
+Do not use the runtime libraries as an implementation dependency, as your code may fail to compile or run
+when Simulator is updated. The API is much more stable.
+
+## How to run Simulator
+
 The main class for starting your CorDapps is `net.corda.simulator.Simulator`. "Uploading" your flow for a given party 
 will create a simulated "virtual node" which can then be invoked using the initiating flow class (in a real Corda
 network this would be done using the `CPI_HASH`).
@@ -26,6 +40,14 @@ network this would be done using the `CPI_HASH`).
 Simulator will wire up your flow with lightweight versions of the same injected services that you'd get with
 the real Corda, enabling your flows to communicate with each other, persist data (currently to an in-memory database)
 and "sign" data (see below).
+
+## Configuration
+
+Simulator provides a builder to create its configuration.
+
+```kotlin
+
+```
 
 ## RequestData
 
