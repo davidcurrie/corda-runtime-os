@@ -7,6 +7,7 @@ import java.util.stream.Stream
 import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Embeddable
+import javax.persistence.EmbeddedId
 import javax.persistence.Entity
 import javax.persistence.EntityManager
 import javax.persistence.FetchType
@@ -22,9 +23,7 @@ import javax.persistence.Version
 /**
  * Cpi entity
  *
- * @property name CPI Name
- * @property version CPI Version
- * @property signerSummaryHash CPI Signer Summary Hash
+ * @property id CPI name, version, signerSummaryHash
  * @property fileName CPI original filename
  * @property fileChecksum Checksum for the original CPI file
  * @property groupPolicy Group Policy JSON document
@@ -35,28 +34,20 @@ import javax.persistence.Version
  */
 @Entity
 @Table(name = "cpi", schema = DbSchema.CONFIG)
-@IdClass(CpiMetadataEntityKey::class)
 @Suppress("LongParameterList")
 data class CpiMetadataEntity(
-    @Id
-    @Column(name = "name", nullable = false)
-    val name: String,
-    @Id
-    @Column(name = "version", nullable = false)
-    val version: String,
-    @Id
-    @Column(name = "signer_summary_hash", nullable = false)
-    val signerSummaryHash: String,
+    @EmbeddedId
+    val id: CpiMetadataEntityKey,
     @Column(name = "file_name", nullable = false)
-    var fileName: String,
+    val fileName: String,
     @Column(name = "file_checksum", nullable = false)
-    var fileChecksum: String,
+    val fileChecksum: String,
     @Column(name = "group_policy", nullable = false)
-    var groupPolicy: String,
+    val groupPolicy: String,
     @Column(name = "group_id", nullable = false)
-    var groupId: String,
+    val groupId: String,
     @Column(name = "file_upload_request_id", nullable = false)
-    var fileUploadRequestId: String,
+    val fileUploadRequestId: String,
     @OneToMany(
         fetch = FetchType.EAGER,
         cascade = [CascadeType.PERSIST, CascadeType.MERGE]
@@ -72,41 +63,14 @@ data class CpiMetadataEntity(
         ),
     )
     val cpks: Set<CpiCpkEntity>,
-    // Initial population of this TS is managed on the DB itself
-    @Column(name = "insert_ts", insertable = false, updatable = true)
-    var insertTimestamp: Instant? = null,
+    @Column(name = "insert_ts", insertable = false, updatable = true) // changed on upsert
+    var insertTimestamp: Instant? = null, // changed on update
     @Column(name = "is_deleted", nullable = false)
-    var isDeleted: Boolean = false,
+    val isDeleted: Boolean = false,
     @Version
     @Column(name = "entity_version", nullable = false)
-    var entityVersion: Int = 0,
+    val entityVersion: Int = 0
 ) {
-    companion object {
-        // Create a [CpiMetadataEntity] with CPKs as filename/metadata pairs
-        fun create(
-            name: String,
-            version: String,
-            signerSummaryHash: String,
-            fileName: String,
-            fileChecksum: String,
-            groupPolicy: String,
-            groupId: String,
-            fileUploadRequestId: String,
-            cpks: Set<CpiCpkEntity>
-        ): CpiMetadataEntity {
-            return CpiMetadataEntity(
-                name,
-                version,
-                signerSummaryHash,
-                fileName,
-                fileChecksum,
-                groupPolicy,
-                groupId,
-                fileUploadRequestId,
-                cpks
-            )
-        }
-    }
 
     @PreUpdate
     fun onUpdate() {
@@ -131,9 +95,12 @@ data class CpiMetadataEntity(
 /** The composite primary key for a CpiEntity. */
 @Embeddable
 data class CpiMetadataEntityKey(
-    private val name: String,
-    private val version: String,
-    private val signerSummaryHash: String,
+    @Column(name = "name", nullable = false)
+    val name: String,
+    @Column(name = "version", nullable = false)
+    val version: String,
+    @Column(name = "signer_summary_hash", nullable = false)
+    val signerSummaryHash: String,
 ) : Serializable
 
 fun EntityManager.findAllCpiMetadata(): Stream<CpiMetadataEntity> {

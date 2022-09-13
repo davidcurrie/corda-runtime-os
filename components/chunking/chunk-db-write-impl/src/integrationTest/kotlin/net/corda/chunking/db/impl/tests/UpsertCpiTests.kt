@@ -165,9 +165,7 @@ class UpsertCpiTests {
         val id = CpiIdentifier(name, version, newRandomSecureHash())
         val cpi = mockCpiWithId(cpks, id)
 
-        cpiPersistence.persistMetadataAndCpks(
-            cpi, "test.cpi", newRandomSecureHash(), UUID.randomUUID().toString(), groupId, emptyList()
-        )
+        cpiPersistence.store(cpi, groupId = groupId, allowCpiUpdate = true)
         return cpi
     }
 
@@ -194,8 +192,8 @@ class UpsertCpiTests {
         val entity = findCpiMetadataEntity(cpi)
 
         assertThat(entity).isNotNull
-        assertThat(entity!!.name).isEqualTo(cpi.metadata.cpiId.name)
-        assertThat(entity.version).isEqualTo(cpi.metadata.cpiId.version)
+        assertThat(entity!!.id.name).isEqualTo(cpi.metadata.cpiId.name)
+        assertThat(entity.id.version).isEqualTo(cpi.metadata.cpiId.version)
         assertThat(entity.groupId).isEqualTo(groupId)
     }
 
