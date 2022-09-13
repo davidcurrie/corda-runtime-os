@@ -19,6 +19,7 @@ import net.corda.messaging.api.records.Record
 import net.corda.schema.Schemas
 import net.corda.schema.configuration.ConfigKeys
 import net.corda.v5.base.util.contextLogger
+import net.corda.v5.base.util.debug
 import net.corda.virtualnode.HoldingIdentity
 import net.corda.virtualnode.VirtualNodeInfo
 import net.corda.virtualnode.toAvro
@@ -124,11 +125,14 @@ class VirtualNodeInfoWriterComponentImpl @Activate constructor(
 
     private fun onRegistrationStatusChangeEvent(event: RegistrationStatusChangeEvent) {
         if (event.status == LifecycleStatus.UP) {
+            configSubscription?.close()
             configSubscription = configurationReadService.registerComponentForUpdates(
                 coordinator,
                 setOf(ConfigKeys.MESSAGING_CONFIG)
             )
         } else {
+            log.warn("Switching to ${event.status}")
+            coordinator.updateStatus(event.status)
             configSubscription?.close()
         }
     }
@@ -138,7 +142,9 @@ class VirtualNodeInfoWriterComponentImpl @Activate constructor(
      * require as defined in [onNewConfiguration]
      */
     private fun onConfigChangedEventReceived(coordinator: LifecycleCoordinator, event: ConfigChangedEvent) {
+        log.debug { "Creating resources" }
         createPublisher(event)
+        log.info("Switching to UP")
         coordinator.updateStatus(LifecycleStatus.UP)
     }
 
