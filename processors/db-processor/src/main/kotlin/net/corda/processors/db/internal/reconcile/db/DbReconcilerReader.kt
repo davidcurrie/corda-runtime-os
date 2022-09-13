@@ -76,7 +76,7 @@ class DbReconcilerReader<K : Any, V : Any>(
             logger.info("Switching to UP")
             coordinator.updateStatus(LifecycleStatus.UP)
         } else {
-            logger.warn("Switching to ${event.status}.")
+            logger.info("Switching to ${event.status}.")
             coordinator.updateStatus(event.status)
             closeResources()
         }
