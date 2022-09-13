@@ -79,13 +79,17 @@ class VirtualNodeInfoReaderEventHandler(
             config
         )
         subscription?.start()
+        log.info("Switching to UP")
         coordinator.updateStatus(LifecycleStatus.UP)
     }
 
     private fun onRegistrationStatusChangeEvent(event: RegistrationStatusChangeEvent, coordinator: LifecycleCoordinator) {
         if (event.status == LifecycleStatus.UP) {
+            configSubscription?.close()
             configSubscription = configurationReadService.registerComponentForUpdates(coordinator, setOf(ConfigKeys.MESSAGING_CONFIG))
         } else {
+            log.warn("Switching to ${event.status}")
+            coordinator.updateStatus(event.status)
             configSubscription?.close()
         }
     }
