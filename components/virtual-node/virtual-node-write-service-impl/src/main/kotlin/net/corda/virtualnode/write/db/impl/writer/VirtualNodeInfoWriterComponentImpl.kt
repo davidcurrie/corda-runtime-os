@@ -138,11 +138,11 @@ class VirtualNodeInfoWriterComponentImpl @Activate constructor(
      * require as defined in [onNewConfiguration]
      */
     private fun onConfigChangedEventReceived(coordinator: LifecycleCoordinator, event: ConfigChangedEvent) {
-        recreatePublisher(event)
+        createPublisher(event)
         coordinator.updateStatus(LifecycleStatus.UP)
     }
 
-    private fun recreatePublisher(event: ConfigChangedEvent) {
+    private fun createPublisher(event: ConfigChangedEvent) {
         publisher?.close()
         publisher = publisherFactory.createPublisher(
             PublisherConfig(CLIENT_ID),
